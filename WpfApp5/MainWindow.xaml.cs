@@ -248,9 +248,9 @@ namespace WpfApp5
             else
             {
                 rectWidth = lineWidth + (showFont ? textHeight : 0) + 10;
-                rectHeight = length  + 10;
+                rectHeight = length + 10;
                 rectX = horizontalRight ? x - lineOffset - (showFont ? textHeight : 0) - 5 : x - lineOffset - 5;
-                rectY = verticalDown ? y - 5 : y - length -  5;
+                rectY = verticalDown ? y - 5 : y - length - 5;
             }
 
             // 绘制背景矩形
@@ -291,7 +291,7 @@ namespace WpfApp5
                 line.Y1 = line.Y2 = verticalDown ? y + lineOffset : y - lineOffset;
 
                 double lx = (line.X1 + line.X2) / 2 - textWidth / 4 * 3;
-                double ly = verticalDown ? y - textHeight : y ;
+                double ly = verticalDown ? y - textHeight : y;
 
                 Canvas.SetLeft(label, lx);
                 Canvas.SetTop(label, ly);
@@ -302,7 +302,7 @@ namespace WpfApp5
                 line.Y2 = verticalDown ? y + length : y;
                 line.X1 = line.X2 = horizontalRight ? x + lineOffset : x - lineOffset;
 
-                double lx = horizontalRight ? x - textHeight : x ;
+                double lx = horizontalRight ? x - textHeight : x;
                 double ly = (line.Y1 + line.Y2) / 2 + textWidth / 4 * 3;
 
                 label.RenderTransform = new RotateTransform(-90);
