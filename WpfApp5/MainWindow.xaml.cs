@@ -13,8 +13,6 @@ namespace WpfApp5
     /// </summary>
     public partial class MainWindow : Window
     {
-        private BitmapImage? _loadedImage;
-
         public MainWindow()
         {
             InitializeComponent();
@@ -22,80 +20,55 @@ namespace WpfApp5
 
         private void LoadImage_Click(object sender, RoutedEventArgs e)
         {
-            var dlg = new OpenFileDialog
+            OpenFileDialog ofd = new OpenFileDialog
             {
-                Filter = "TIF|*.tif|PNG|*.png|JPG|*.jpg;*.jpeg|BMP|*.bmp",
-                Title = "存储图片",
-                InitialDirectory = "E:\\imagesource",
+                Filter = "图像文件|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff"
             };
-            if (dlg.ShowDialog() == true)
+
+            if (ofd.ShowDialog() == true)
             {
-                _loadedImage = new BitmapImage(new Uri(dlg.FileName));
-                MainImage.Source = _loadedImage;
-                OverlayCanvas.Children.Clear();
+                BitmapImage bitmap = new BitmapImage(new Uri(ofd.FileName));
+                MainImage.Source = bitmap;
+
+                // 调整 Image 控件大小以适应 Canvas
+                MainImage.Width = bitmap.PixelWidth;
+                MainImage.Height = bitmap.PixelHeight;
+
+                OverlayCanvas.Width = bitmap.PixelWidth;
+                OverlayCanvas.Height = bitmap.PixelHeight;
+
                 UpdateScaleBar();
             }
         }
 
         private void ExportImage_Click(object sender, RoutedEventArgs e)
         {
-            if (_loadedImage == null) return;
+            if (MainImage.Source == null) return;
 
-            // 1. 选择保存合成图
-            var dlg = new SaveFileDialog
-            {
-                Filter = "PNG图像|*.png",
-                InitialDirectory = "C:\\Users\\Administrator\\Desktop\\Image",
-                FileName = $"{DateTime.Now:mm-ss-fff}.png"
-            };
-
-            if (dlg.ShowDialog() != true) return;
-
-            var rtb = new RenderTargetBitmap(
-                (int)_loadedImage.PixelWidth,
-                (int)_loadedImage.PixelHeight,
+            RenderTargetBitmap rtb = new RenderTargetBitmap(
+                (int)ImageCanvas.ActualWidth,
+                (int)ImageCanvas.ActualHeight,
                 96, 96, PixelFormats.Pbgra32);
 
-            var dv = new DrawingVisual();
-            using (var dc = dv.RenderOpen())
+            rtb.Render(ImageCanvas);
+
+            SaveFileDialog sfd = new SaveFileDialog
             {
-                // 绘制原图
-                dc.DrawImage(_loadedImage, new Rect(0, 0, _loadedImage.PixelWidth, _loadedImage.PixelHeight));
+                Filter = "PNG 文件|*.png",
+                FileName = "带比例尺图像.png"
+            };
 
-                // 绘制Overlay
-                foreach (UIElement child in OverlayCanvas.Children)
+            if (sfd.ShowDialog() == true)
+            {
+                using (FileStream fs = new FileStream(sfd.FileName, FileMode.Create))
                 {
-                    if (child is Line line)
-                    {
-                        var pen = new Pen(((SolidColorBrush)line.Stroke), line.StrokeThickness);
-                        dc.DrawLine(pen,
-                            new Point(Canvas.GetLeft(line) + line.X1, Canvas.GetTop(line) + line.Y1),
-                            new Point(Canvas.GetLeft(line) + line.X2, Canvas.GetTop(line) + line.Y2));
-                    }
-                    else if (child is TextBlock tb)
-                    {
-                        var ft = new FormattedText(
-                            tb.Text,
-                            System.Globalization.CultureInfo.CurrentCulture,
-                            FlowDirection.LeftToRight,
-                            new Typeface("Arial"),
-                            tb.FontSize,
-                            tb.Foreground,
-                            96);
-
-                        dc.DrawText(ft, new Point(Canvas.GetLeft(tb), Canvas.GetTop(tb)));
-                    }
+                    PngBitmapEncoder encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(rtb));
+                    encoder.Save(fs);
                 }
+
+                MessageBox.Show("导出成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-            rtb.Render(dv);
-
-            using var fs = new FileStream(dlg.FileName, FileMode.Create);
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(rtb));
-            encoder.Save(fs);
-
-            string openFilepath = "C:\\Users\\Administrator\\Desktop\\Image";
-            System.Diagnostics.Process.Start("Explorer.exe", $"\"{openFilepath}\"");
         }
 
         private void ScaleParamsChanged(object sender, EventArgs e)
@@ -105,7 +78,8 @@ namespace WpfApp5
 
         private void UpdateScaleBar()
         {
-            if (_loadedImage == null) return;
+            if (MainImage == null) return;
+            if (MainImage.Source == null) return;
 
             OverlayCanvas.Children.Clear();
 
@@ -135,37 +109,100 @@ namespace WpfApp5
                 };
             }
 
+            // 背景
+            Brush bgBrush = Brushes.Gray;
+            if (BackgroundBox.SelectedItem is ComboBoxItem bgItem)
+            {
+                bgBrush = bgItem.Content.ToString() switch
+                {
+                    "白色" => Brushes.White,
+                    "黑色" => Brushes.Black,
+                    "透明" => Brushes.Transparent,
+                    _ => Brushes.Gray,
+                };
+            }
+            ImageCanvas.Background = bgBrush;
+
+            // 字体
+            FontWeight fontWeight = FontWeights.Normal;
+            if (FontWeightBox.SelectedItem is ComboBoxItem fwItem && fwItem.Content.ToString() == "加粗")
+                fontWeight = FontWeights.Bold;
+
+            bool showFont = true;
+            if (FontVisibilityBox.SelectedItem is ComboBoxItem fvItem && fvItem.Content.ToString() == "隐藏")
+                showFont = false;
+
+            string fontFamily = "Segoe UI";
+            if (FontFamilyBox.SelectedItem is ComboBoxItem ffItem)
+                fontFamily = ffItem.Content.ToString();
+
             double margin = 30;
             double x = margin, y = margin;
             bool horizontalRight = true;
             bool verticalDown = true;
 
-            // 四个角位置
             if (PositionBox.SelectedItem is ComboBoxItem pos)
             {
                 switch (pos.Content.ToString())
                 {
-                    case "左上":
-                        x = margin; y = margin;
-                        horizontalRight = true; verticalDown = true;
-                        break;
-                    case "右上":
-                        x = _loadedImage.PixelWidth - margin; y = margin;
-                        horizontalRight = false; verticalDown = true;
-                        break;
-                    case "左下":
-                        x = margin; y = _loadedImage.PixelHeight - margin;
-                        horizontalRight = true; verticalDown = false;
-                        break;
-                    case "右下":
-                        x = _loadedImage.PixelWidth - margin; y = _loadedImage.PixelHeight - margin;
-                        horizontalRight = false; verticalDown = false;
-                        break;
+                    case "左上": x = margin; y = margin; horizontalRight = true; verticalDown = true; break;
+                    case "右上": x = MainImage.ActualWidth - margin; y = margin; horizontalRight = false; verticalDown = true; break;
+                    case "左下": x = margin; y = MainImage.ActualHeight - margin; horizontalRight = true; verticalDown = false; break;
+                    case "右下": x = MainImage.ActualWidth - margin; y = MainImage.ActualHeight - margin; horizontalRight = false; verticalDown = false; break;
                 }
             }
 
             void DrawScale(bool horizontal, int length)
             {
+                double lineOffset = lineWidth / 2;
+                double textOffset = fontSize + 2;
+
+                // 计算线条和文字区域
+                double rectX, rectY, rectWidth, rectHeight;
+
+                if (horizontal)
+                {
+                    rectWidth = length + 10;
+                    rectHeight = lineWidth + textOffset + 10;
+
+                    rectX = horizontalRight ? x - 5 : x - length - 5;
+                    rectY = verticalDown ? y - lineOffset - textOffset - 5 : y - lineOffset - 5;
+                }
+                else
+                {
+                    rectWidth = lineWidth + textOffset + 10;
+                    rectHeight = length + textOffset + 10;
+
+                    rectX = horizontalRight ? x - lineOffset - 5 : x - lineOffset - textOffset - 5;
+                    rectY = verticalDown ? y - 5 : y - length - textOffset - 5;
+                }
+
+                // 背景颜色
+                Brush bgBrush = Brushes.Transparent;
+                if (BackgroundBox.SelectedItem is ComboBoxItem bgItem)
+                {
+                    bgBrush = bgItem.Content.ToString() switch
+                    {
+                        "灰色" => Brushes.Gray,
+                        "白色" => Brushes.White,
+                        "黑色" => Brushes.Black,
+                        "透明" => Brushes.Transparent,
+                        _ => Brushes.Gray,
+                    };
+                }
+
+                // 绘制背景矩形
+                var rect = new Rectangle
+                {
+                    Width = rectWidth,
+                    Height = rectHeight,
+                    Fill = bgBrush
+                };
+                Canvas.SetLeft(rect, rectX);
+                Canvas.SetTop(rect, rectY);
+                OverlayCanvas.Children.Add(rect);
+
+                // 绘制线条
                 var line = new Line
                 {
                     Stroke = textBrush,
@@ -173,65 +210,52 @@ namespace WpfApp5
                 };
                 OverlayCanvas.Children.Add(line);
 
+                // 绘制文字
                 var label = new TextBlock
                 {
-                    Text = $"{length} pixel",
+                    Text = $"{length} px",
                     FontSize = fontSize,
-                    Foreground = textBrush
+                    Foreground = textBrush,
+                    FontWeight = fontWeight,
+                    FontFamily = new FontFamily(fontFamily),
+                    Visibility = showFont ? Visibility.Visible : Visibility.Collapsed
                 };
                 OverlayCanvas.Children.Add(label);
 
                 if (horizontal)
                 {
-                    // 水平线：固定底部 y
-                    double yBase = verticalDown ? y : y; // 你想固定的底部y
-                    line.X1 = horizontalRight ? x : x - length;
-                    line.X2 = horizontalRight ? x + length : x;
-                    // 调整Y，使底部固定
-                    line.Y1 = line.Y2 = verticalDown ? yBase + lineWidth / 2 : yBase - lineWidth / 2;
+                    if (horizontalRight) { line.X1 = x; line.X2 = x + length; }
+                    else { line.X1 = x - length; line.X2 = x; }
+                    line.Y1 = line.Y2 = verticalDown ? y - lineOffset : y + lineOffset;
 
-                    // 文字在线条外侧（远离角落）
-                    double lx = (line.X1 + line.X2) / 2 - fontSize - 20; // 居中
-                    double ly = verticalDown ? yBase - fontSize - 2 - lineWidth / 2 : yBase + 2 + lineWidth / 2;
+                    double lx = (line.X1 + line.X2) / 2 - fontSize / 2;
+                    double ly = verticalDown ? y - textOffset - lineOffset : y + lineOffset + 2;
                     Canvas.SetLeft(label, lx);
                     Canvas.SetTop(label, ly);
                 }
                 else
                 {
-                    // 垂直线：固定左边 x
-                    double xBase = horizontalRight ? x : x; // 你想固定的左边x
+                    double xBase = horizontalRight ? x : x;
                     line.Y1 = verticalDown ? y : y - length;
                     line.Y2 = verticalDown ? y + length : y;
-                    // 调整X，使左边固定
-                    line.X1 = line.X2 = horizontalRight ? xBase + lineWidth / 2 : xBase - lineWidth / 2;
+                    line.X1 = line.X2 = horizontalRight ? xBase + lineOffset : xBase - lineOffset;
 
-                    // 文字旋转，在线条外侧（远离角落）
                     label.RenderTransform = new RotateTransform(-90);
                     label.RenderTransformOrigin = new Point(0, 0);
-                    double lx = horizontalRight ? xBase - fontSize - 2 - lineWidth / 2 : xBase + lineWidth / 2;
-                    double ly = (line.Y1 + line.Y2) / 2 - fontSize / 2 + 40;
+                    double lx = horizontalRight ? xBase - textOffset - lineOffset : xBase + lineOffset + 2;
+                    double ly = (line.Y1 + line.Y2) / 2 - fontSize / 2;
                     Canvas.SetLeft(label, lx);
                     Canvas.SetTop(label, ly);
                 }
             }
 
-            if (DrawModeBox.SelectedItem is ComboBoxItem drawMode)
+            string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "共存";
+            switch (drawMode)
             {
-                switch (drawMode.Content.ToString())
-                {
-                    case "水平":
-                        DrawScale(true, scaleWidth);
-                        break;
-                    case "竖直":
-                        DrawScale(false, scaleHeight);
-                        break;
-                    case "共存":
-                        DrawScale(true, scaleWidth);
-                        DrawScale(false, scaleHeight);
-                        break;
-                }
+                case "水平": DrawScale(true, scaleWidth); break;
+                case "竖直": DrawScale(false, scaleHeight); break;
+                case "共存": DrawScale(true, scaleWidth); DrawScale(false, scaleHeight); break;
             }
-
         }
 
     }
