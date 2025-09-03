@@ -49,6 +49,12 @@
                 Text="1"
                 TextChanged="ScaleParamsChanged" />
 
+            <TextBlock Text="单位:" />
+            <TextBox
+                x:Name="UnitBox"
+                Text="Pixel"
+                TextChanged="ScaleParamsChanged" />
+
             <TextBlock Text="字体颜色:" />
             <ComboBox
                 x:Name="ColorBox"

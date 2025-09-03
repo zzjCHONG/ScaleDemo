@@ -136,14 +136,14 @@ namespace WpfApp5
 
             string fontFamily = "Segoe UI";
             if (FontFamilyBox.SelectedItem is ComboBoxItem ffItem)
-                fontFamily = ffItem.Content.ToString();
+                fontFamily = ffItem.Content.ToString()!;
 
             double margin = 50;
             double x = margin, y = margin;
             bool horizontalRight = true;
             bool verticalDown = true;
 
-            string position = (PositionBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+            string position = (PositionBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
             if (position != null)
             {
                 switch (position)
@@ -238,20 +238,19 @@ namespace WpfApp5
             double lineOffset = lineWidth / 2;
             double rectX, rectY, rectWidth, rectHeight;
 
-            // 修改 DrawScale 方法，调整背景矩形尺寸
             if (horizontal)
             {
                 rectWidth = length + 10;
                 rectHeight = lineWidth + (showFont ? textHeight : 0) + 10;
                 rectX = horizontalRight ? x - 5 : x - length - 5;
-                rectY = verticalDown ? y + lineOffset - (showFont ? textHeight : 0) - 5: y + lineOffset - 5;
+                rectY = verticalDown ? y + lineOffset - (showFont ? textHeight : 0) - 5 : y + lineOffset - 5;
             }
             else
             {
                 rectWidth = lineWidth + (showFont ? textHeight : 0) + 10;
-                rectHeight = length + (showFont ? textWidth : 0) + 10;
+                rectHeight = length  + 10;
                 rectX = horizontalRight ? x - lineOffset - (showFont ? textHeight : 0) - 5 : x - lineOffset - 5;
-                rectY = verticalDown? y - 5 : y - length - (showFont ? textWidth : 0) - 5 ;
+                rectY = verticalDown ? y - 5 : y - length -  5;
             }
 
             // 绘制背景矩形
@@ -276,7 +275,7 @@ namespace WpfApp5
             // 绘制文字
             var label = new TextBlock
             {
-                Text = $"{length} pixel",
+                Text = $"{length} {UnitBox.Text}",
                 FontSize = fontSize,
                 Foreground = textBrush,
                 FontWeight = fontWeight,
