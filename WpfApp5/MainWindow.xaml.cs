@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -157,24 +158,38 @@ namespace WpfApp5
                 double lineOffset = lineWidth / 2;
                 double textOffset = fontSize + 2;
 
-                // 计算线条和文字区域
+                // 用于测量文字尺寸
+                var formattedText = new FormattedText(
+                    $"{length} px",
+                    CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface(fontFamily),
+                    fontSize,
+                    textBrush,
+                    VisualTreeHelper.GetDpi(this).PixelsPerDip);
+
+                double textWidth = formattedText.Width;
+                double textHeight = formattedText.Height;
+
                 double rectX, rectY, rectWidth, rectHeight;
 
                 if (horizontal)
                 {
                     rectWidth = length + 10;
-                    rectHeight = lineWidth + textOffset + 10;
+                    rectHeight = lineWidth + textHeight + 10;
 
                     rectX = horizontalRight ? x - 5 : x - length - 5;
-                    rectY = verticalDown ? y - lineOffset - textOffset - 5 : y - lineOffset - 5;
+                    rectY = verticalDown ? y - lineOffset - textHeight - 5 : y - lineOffset - 5;
                 }
                 else
                 {
-                    rectWidth = lineWidth + textOffset + 10;
-                    rectHeight = length + textOffset + 10;
+                    // 关键：旋转后，文字的宽度是textHeight，高度是textWidth
+                    rectWidth = lineWidth + textHeight + 10;
+                    rectHeight = length + textWidth + 10;
 
-                    rectX = horizontalRight ? x - lineOffset - 5 : x - lineOffset - textOffset - 5;
-                    rectY = verticalDown ? y - 5 : y - length - textOffset - 5;
+                    // 调整背景位置以适应文字的偏移
+                    rectX = horizontalRight ? x - lineOffset - textHeight - 5 : x - lineOffset - 5;
+                    rectY = verticalDown ? y - 5 -20 : y - length - textWidth - 5+20;
                 }
 
                 // 背景颜色
@@ -213,7 +228,7 @@ namespace WpfApp5
                 // 绘制文字
                 var label = new TextBlock
                 {
-                    Text = $"{length} px",
+                    Text = $"{length} pixel",
                     FontSize = fontSize,
                     Foreground = textBrush,
                     FontWeight = fontWeight,
@@ -228,8 +243,8 @@ namespace WpfApp5
                     else { line.X1 = x - length; line.X2 = x; }
                     line.Y1 = line.Y2 = verticalDown ? y - lineOffset : y + lineOffset;
 
-                    double lx = (line.X1 + line.X2) / 2 - fontSize / 2;
-                    double ly = verticalDown ? y - textOffset - lineOffset : y + lineOffset + 2;
+                    double lx = (line.X1 + line.X2) / 2 - textWidth / 2-50;
+                    double ly = verticalDown ? y - textHeight - lineOffset : y + lineOffset + 2;
                     Canvas.SetLeft(label, lx);
                     Canvas.SetTop(label, ly);
                 }
@@ -242,13 +257,13 @@ namespace WpfApp5
 
                     label.RenderTransform = new RotateTransform(-90);
                     label.RenderTransformOrigin = new Point(0, 0);
-                    double lx = horizontalRight ? xBase - textOffset - lineOffset : xBase + lineOffset + 2;
-                    double ly = (line.Y1 + line.Y2) / 2 - fontSize / 2;
+
+                    double lx = horizontalRight ? xBase - textHeight - lineOffset : xBase + lineOffset + 2;
+                    double ly = (line.Y1 + line.Y2) / 2 - textWidth / 2 + 50;
                     Canvas.SetLeft(label, lx);
                     Canvas.SetTop(label, ly);
                 }
             }
-
             string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "共存";
             switch (drawMode)
             {
@@ -257,6 +272,5 @@ namespace WpfApp5
                 case "共存": DrawScale(true, scaleWidth); DrawScale(false, scaleHeight); break;
             }
         }
-
     }
 }
