@@ -85,10 +85,8 @@
                 x:Name="FontFamilyBox"
                 SelectedIndex="0"
                 SelectionChanged="ScaleParamsChanged">
-                <ComboBoxItem Content="Segoe UI" />
                 <ComboBoxItem Content="Arial" />
                 <ComboBoxItem Content="Times New Roman" />
-                <ComboBoxItem Content="Consolas" />
             </ComboBox>
 
             <TextBlock Text="背景颜色:" />
