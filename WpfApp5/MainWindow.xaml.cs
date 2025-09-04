@@ -162,50 +162,50 @@ namespace WpfApp5
                     textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, vTextWidth, vTextHeight);
         }
 
-        private void DrawScale(bool horizontal, int length, double x, double y, bool horizontalRight,
-            bool verticalDown, Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont,
+        private void DrawScale(
+            bool horizontal, int length, double x, double y, bool horizontalRight, bool verticalDown,
+            Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont,
             string fontFamily, int fontSize, int lineWidth, double textWidth, double textHeight)
         {
+            double margin = 5;
+            double halfLine = lineWidth / 2.0;
 
-            double lineOffset = lineWidth / 2;
-            double rectWidth, rectHeight, rectX, rectY;
-            double textMargin = 5;
+            // 背景矩形尺寸与位置
+            double bgWidth, bgHeight, bgLeft, bgTop;
 
             if (horizontal)
             {
                 double maxLen = Math.Max(showFont ? textWidth : 0, length);
-                rectWidth = maxLen + 2 * textMargin;
-                rectHeight = lineWidth + (showFont ? textHeight : 0) + 2 * textMargin;
+                bgWidth = maxLen + 2 * margin;
+                bgHeight = lineWidth + (showFont ? textHeight : 0) + 2 * margin;
 
-                rectX = horizontalRight
-                    ? x - textMargin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
-                    : x - length - textMargin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
+                bgLeft = horizontalRight
+                    ? x - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
+                    : x - length - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
 
-                rectY = verticalDown 
-                    ? y - (showFont ? textHeight : 0) - textMargin 
-                    : y - lineWidth - textMargin;
+                bgTop = verticalDown
+                    ? y - (showFont ? textHeight : 0) - margin
+                    : y - lineWidth - margin;
             }
             else
             {
                 double maxLen = Math.Max(showFont ? textWidth : 0, length);
+                bgWidth = lineWidth + (showFont ? textHeight : 0) + 2 * margin;
+                bgHeight = maxLen + 2 * margin;
 
-                rectWidth = lineWidth + (showFont ? textHeight : 0) + 2 * textMargin;
-                rectHeight = maxLen + 2 * textMargin;
+                bgLeft = horizontalRight
+                    ? x - (showFont ? textHeight : 0) - margin
+                    : x - lineWidth - margin;
 
-                rectX = horizontalRight 
-                    ? x - (showFont ? textHeight : 0) - textMargin 
-                    : x - lineWidth - textMargin;
-
-                rectY = verticalDown 
-                    ? y - textMargin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0) 
-                    : y - length - textMargin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
+                bgTop = verticalDown
+                    ? y - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
+                    : y - length - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
             }
 
-
             // 背景
-            var rect = new Rectangle { Width = rectWidth, Height = rectHeight, Fill = bgBrush };
-            Canvas.SetLeft(rect, rectX);
-            Canvas.SetTop(rect, rectY);
+            var rect = new Rectangle { Width = bgWidth, Height = bgHeight, Fill = bgBrush };
+            Canvas.SetLeft(rect, bgLeft);
+            Canvas.SetTop(rect, bgTop);
             OverlayCanvas.Children.Add(rect);
 
             // 线条
@@ -224,30 +224,33 @@ namespace WpfApp5
             };
             OverlayCanvas.Children.Add(label);
 
+            // 坐标
+            double labelLeft, labelTop;
+
             if (horizontal)
             {
                 line.X1 = horizontalRight ? x : x - length;
                 line.X2 = horizontalRight ? x + length : x;
-                line.Y1 = line.Y2 = verticalDown ? y + lineOffset : y - lineOffset;
+                line.Y1 = line.Y2 = verticalDown ? y + halfLine : y - halfLine;
 
-                double lx = (line.X1 + line.X2) / 2 - textWidth / 2;
-                double ly = verticalDown ? y - textHeight : y;
-                Canvas.SetLeft(label, lx);
-                Canvas.SetTop(label, ly);
+                labelLeft = (line.X1 + line.X2) / 2 - textWidth / 2;
+                labelTop = verticalDown ? y - textHeight : y;
             }
             else
             {
                 line.Y1 = verticalDown ? y : y - length;
                 line.Y2 = verticalDown ? y + length : y;
-                line.X1 = line.X2 = horizontalRight ? x + lineOffset : x - lineOffset;
+                line.X1 = line.X2 = horizontalRight ? x + halfLine : x - halfLine;
 
-                double lx = horizontalRight ? x - textHeight : x;
-                double ly = (line.Y1 + line.Y2) / 2 + textWidth / 2;
+                labelLeft = horizontalRight ? x - textHeight : x;
+                labelTop = (line.Y1 + line.Y2) / 2 + textWidth / 2;
+
                 label.RenderTransform = new RotateTransform(-90);
                 label.RenderTransformOrigin = new Point(0, 0);
-                Canvas.SetLeft(label, lx);
-                Canvas.SetTop(label, ly);
             }
+
+            Canvas.SetLeft(label, labelLeft);
+            Canvas.SetTop(label, labelTop);
         }
 
     }
