@@ -123,7 +123,7 @@ namespace WpfApp5
                     _ => Brushes.Gray,
                 };
             }
-            ImageCanvas.Background = bgBrush;
+            ImageCanvas.Background = Brushes.DarkGray;
 
             // 字体
             FontWeight fontWeight = FontWeights.Normal;
@@ -243,13 +243,13 @@ namespace WpfApp5
                 rectWidth = length + 10;
                 rectHeight = lineWidth + (showFont ? textHeight : 0) + 10;
                 rectX = horizontalRight ? x - 5 : x - length - 5;
-                rectY = verticalDown ? y + lineOffset - (showFont ? textHeight : 0) - 5 : y + lineOffset - 5;
+                rectY = verticalDown ? y- (showFont ? textHeight : 0) - 5 : y - lineWidth - 5;
             }
             else
             {
                 rectWidth = lineWidth + (showFont ? textHeight : 0) + 10;
                 rectHeight = length + 10;
-                rectX = horizontalRight ? x - lineOffset - (showFont ? textHeight : 0) - 5 : x - lineOffset - 5;
+                rectX = horizontalRight ? x - (showFont ? textHeight : 0) - 5 : x - lineWidth - 5;
                 rectY = verticalDown ? y - 5 : y - length - 5;
             }
 
@@ -258,7 +258,7 @@ namespace WpfApp5
             {
                 Width = rectWidth,
                 Height = rectHeight,
-                Fill = bgBrush
+                Fill = bgBrush,
             };
             Canvas.SetLeft(rect, rectX);
             Canvas.SetTop(rect, rectY);
@@ -312,6 +312,6 @@ namespace WpfApp5
                 Canvas.SetTop(label, ly);
             }
         }
-
+ 
     }
 }
