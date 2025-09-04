@@ -129,7 +129,7 @@ namespace WpfApp5
             double x = margin, y = margin;
             bool horizontalRight = true, verticalDown = true;
 
-            string position = (PositionBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "左上";
+            string position = (PositionBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
             switch (position)
             {
                 case "右上":
@@ -153,8 +153,6 @@ namespace WpfApp5
                 case "左上": default: break;
             }
 
-            string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
-
             // 计算文本尺寸
             FormattedText hText = new($"{scaleX} {UnitBox.Text}", CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize,
@@ -168,6 +166,7 @@ namespace WpfApp5
             double vTextWidth = vText.Width, vTextHeight = vText.Height;
 
             // 绘制
+            string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
             if (drawMode is "共存" or "水平")
                 DrawScale(true, scaleX, x, y, horizontalRight, verticalDown,
                     textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, hTextWidth, hTextHeight);
@@ -199,8 +198,8 @@ namespace WpfApp5
                 bgWidth = maxLen + 2 * margin;
                 bgHeight = lineWidth + (showFont ? textHeight : 0) + 2 * margin;
 
-                if (drawMode is "共存")
-                    offset = bgHeight - (showFont ? textHeight : 0);
+                //if (drawMode is "共存")
+                //    offset = bgHeight - (showFont ? textHeight : 0);
 
                 bgLeft = horizontalRight
                     ? x - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
@@ -216,8 +215,8 @@ namespace WpfApp5
                 bgWidth = lineWidth + (showFont ? textHeight : 0) + 2 * margin;
                 bgHeight = maxLen + 2 * margin;
 
-                if (drawMode is "共存")
-                    offset = bgWidth-(showFont ? textHeight : 0);
+                //if (drawMode is "共存")
+                //    offset = bgWidth-(showFont ? textHeight : 0);
 
                 bgLeft = horizontalRight
                     ? x - (showFont ? textHeight : 0) - margin-offset
