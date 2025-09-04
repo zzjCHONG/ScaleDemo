@@ -132,13 +132,28 @@ namespace WpfApp5
             string position = (PositionBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "左上";
             switch (position)
             {
-                case "右上": x = MainImage.ActualWidth - margin; y = margin; horizontalRight = false; verticalDown = true; break;
-                case "左下": x = margin; y = MainImage.ActualHeight - margin; horizontalRight = true; verticalDown = false; break;
-                case "右下": x = MainImage.ActualWidth - margin; y = MainImage.ActualHeight - margin; horizontalRight = false; verticalDown = false; break;
+                case "右上":
+                    x = MainImage.ActualWidth - margin;
+                    y = margin;
+                    horizontalRight = false;
+                    verticalDown = true;
+                    break;
+                case "左下":
+                    x = margin;
+                    y = MainImage.ActualHeight - margin;
+                    horizontalRight = true;
+                    verticalDown = false;
+                    break;
+                case "右下":
+                    x = MainImage.ActualWidth - margin;
+                    y = MainImage.ActualHeight - margin;
+                    horizontalRight = false;
+                    verticalDown = false;
+                    break;
                 case "左上": default: break;
             }
 
-            string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "共存";
+            string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
 
             // 计算文本尺寸
             FormattedText hText = new($"{scaleX} {UnitBox.Text}", CultureInfo.CurrentCulture,
@@ -167,8 +182,13 @@ namespace WpfApp5
             Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont,
             string fontFamily, int fontSize, int lineWidth, double textWidth, double textHeight)
         {
-            double margin = 5;
+            string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
+
+            double margin = 5;//背景相对线段的延伸量
             double halfLine = lineWidth / 2.0;
+
+            // 调整起始位置的偏移量
+            double offset=0;
 
             // 背景矩形尺寸与位置
             double bgWidth, bgHeight, bgLeft, bgTop;
@@ -179,13 +199,16 @@ namespace WpfApp5
                 bgWidth = maxLen + 2 * margin;
                 bgHeight = lineWidth + (showFont ? textHeight : 0) + 2 * margin;
 
+                if (drawMode is "共存")
+                    offset = bgHeight - (showFont ? textHeight : 0);
+
                 bgLeft = horizontalRight
                     ? x - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
                     : x - length - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
 
                 bgTop = verticalDown
-                    ? y - (showFont ? textHeight : 0) - margin
-                    : y - lineWidth - margin;
+                    ? y - (showFont ? textHeight : 0) - margin - offset
+                    : y - lineWidth - margin + offset;
             }
             else
             {
@@ -193,9 +216,12 @@ namespace WpfApp5
                 bgWidth = lineWidth + (showFont ? textHeight : 0) + 2 * margin;
                 bgHeight = maxLen + 2 * margin;
 
+                if (drawMode is "共存")
+                    offset = bgWidth-(showFont ? textHeight : 0);
+
                 bgLeft = horizontalRight
-                    ? x - (showFont ? textHeight : 0) - margin
-                    : x - lineWidth - margin;
+                    ? x - (showFont ? textHeight : 0) - margin-offset
+                    : x - lineWidth - margin + offset;
 
                 bgTop = verticalDown
                     ? y - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
@@ -231,18 +257,18 @@ namespace WpfApp5
             {
                 line.X1 = horizontalRight ? x : x - length;
                 line.X2 = horizontalRight ? x + length : x;
-                line.Y1 = line.Y2 = verticalDown ? y + halfLine : y - halfLine;
+                line.Y1 = line.Y2 = verticalDown ? y + halfLine - offset : y - halfLine + offset;
 
                 labelLeft = (line.X1 + line.X2) / 2 - textWidth / 2;
-                labelTop = verticalDown ? y - textHeight : y;
+                labelTop = verticalDown ? y - textHeight - offset : y + offset;
             }
             else
             {
                 line.Y1 = verticalDown ? y : y - length;
                 line.Y2 = verticalDown ? y + length : y;
-                line.X1 = line.X2 = horizontalRight ? x + halfLine : x - halfLine;
+                line.X1 = line.X2 = horizontalRight ? x + halfLine - offset : x - halfLine + offset;
 
-                labelLeft = horizontalRight ? x - textHeight : x;
+                labelLeft = horizontalRight ? x - textHeight - offset : x + offset;
                 labelTop = (line.Y1 + line.Y2) / 2 + textWidth / 2;
 
                 label.RenderTransform = new RotateTransform(-90);
