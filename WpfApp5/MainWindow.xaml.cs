@@ -89,7 +89,6 @@ namespace WpfApp5
             if (!int.TryParse(ScaleLengthHeightBox.Text, out int scaleHeight)) scaleHeight = 50;
             if (!int.TryParse(FontSizeBox.Text, out int fontSize)) fontSize = 12;
             if (!int.TryParse(ThicknessBox.Text, out int lineWidth)) lineWidth = 2;
-
             scaleWidth = Math.Max(1, scaleWidth);
             scaleHeight = Math.Max(1, scaleHeight);
             fontSize = Math.Max(1, fontSize);
@@ -123,7 +122,6 @@ namespace WpfApp5
                     _ => Brushes.Gray,
                 };
             }
-            ImageCanvas.Background = Brushes.DarkGray;
 
             // 字体
             FontWeight fontWeight = FontWeights.Normal;
@@ -158,24 +156,8 @@ namespace WpfApp5
             string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "共存";
 
             // 计算水平和垂直方向的文本尺寸
-            FormattedText horizontalFormattedText = new(
-                $"{scaleWidth} px",
-                CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight,
-                new Typeface(fontFamily),
-                fontSize,
-                textBrush,
-                VisualTreeHelper.GetDpi(this).PixelsPerDip);
-
-            FormattedText verticalFormattedText = new(
-                $"{scaleHeight} px",
-                CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight,
-                new Typeface(fontFamily),
-                fontSize,
-                textBrush,
-                VisualTreeHelper.GetDpi(this).PixelsPerDip);
-
+            FormattedText horizontalFormattedText = new($"{scaleWidth} px", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize, textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            FormattedText verticalFormattedText = new($"{scaleHeight} px", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize, textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
             double horizontalTextWidth = horizontalFormattedText.Width;
             double horizontalTextHeight = horizontalFormattedText.Height;
             double verticalTextWidth = verticalFormattedText.Width;

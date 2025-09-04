@@ -137,7 +137,7 @@
         <Canvas
             x:Name="ImageCanvas"
             Grid.Column="1"
-            Background="Gray">
+            Background="LightSlateGray">
             <Image x:Name="MainImage" />
             <Canvas x:Name="OverlayCanvas" />
         </Canvas>
