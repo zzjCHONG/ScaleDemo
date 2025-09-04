@@ -162,31 +162,45 @@ namespace WpfApp5
                     textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, vTextWidth, vTextHeight);
         }
 
-        private void DrawScale(
-            bool horizontal, int length, double x, double y,
-            bool horizontalRight, bool verticalDown,
-            Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont,
-            string fontFamily, int fontSize, int lineWidth,
-            double textWidth, double textHeight)
+        private void DrawScale(bool horizontal, int length, double x, double y, bool horizontalRight,
+            bool verticalDown, Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont,
+            string fontFamily, int fontSize, int lineWidth, double textWidth, double textHeight)
         {
+
             double lineOffset = lineWidth / 2;
             double rectWidth, rectHeight, rectX, rectY;
+            double textMargin = 5;
 
             if (horizontal)
             {
                 double maxLen = Math.Max(showFont ? textWidth : 0, length);
-                rectWidth = maxLen + 10;
-                rectHeight = lineWidth + (showFont ? textHeight : 0) + 10;
-                rectX = horizontalRight ? x - 5 : x - maxLen - 5;
-                rectY = verticalDown ? y - (showFont ? textHeight : 0) - 5 : y - lineWidth - 5;
+                rectWidth = maxLen + 2 * textMargin;
+                rectHeight = lineWidth + (showFont ? textHeight : 0) + 2 * textMargin;
+
+                rectX = horizontalRight
+                    ? x - textMargin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
+                    : x - length - textMargin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
+
+                rectY = verticalDown 
+                    ? y - (showFont ? textHeight : 0) - textMargin 
+                    : y - lineWidth - textMargin;
             }
             else
             {
-                rectWidth = lineWidth + (showFont ? textHeight : 0) + 10;
-                rectHeight = length + 10;
-                rectX = horizontalRight ? x - (showFont ? textHeight : 0) - 5 : x - lineWidth - 5;
-                rectY = verticalDown ? y - 5 : y - length - 5;
+                double maxLen = Math.Max(showFont ? textWidth : 0, length);
+
+                rectWidth = lineWidth + (showFont ? textHeight : 0) + 2 * textMargin;
+                rectHeight = maxLen + 2 * textMargin;
+
+                rectX = horizontalRight 
+                    ? x - (showFont ? textHeight : 0) - textMargin 
+                    : x - lineWidth - textMargin;
+
+                rectY = verticalDown 
+                    ? y - textMargin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0) 
+                    : y - length - textMargin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
             }
+
 
             // 背景
             var rect = new Rectangle { Width = rectWidth, Height = rectHeight, Fill = bgBrush };
