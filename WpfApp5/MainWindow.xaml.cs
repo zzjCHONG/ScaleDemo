@@ -79,20 +79,14 @@ namespace WpfApp5
 
         private void UpdateScaleBar()
         {
-            if (MainImage == null) return;
-            if (MainImage.Source == null) return;
-
+            if (MainImage?.Source == null) return;
             OverlayCanvas.Children.Clear();
 
-            // 获取参数
-            if (!int.TryParse(ScaleLengthWidthBox.Text, out int scaleWidth)) scaleWidth = 50;
-            if (!int.TryParse(ScaleLengthHeightBox.Text, out int scaleHeight)) scaleHeight = 50;
-            if (!int.TryParse(FontSizeBox.Text, out int fontSize)) fontSize = 12;
-            if (!int.TryParse(ThicknessBox.Text, out int lineWidth)) lineWidth = 2;
-            scaleWidth = Math.Max(1, scaleWidth);
-            scaleHeight = Math.Max(1, scaleHeight);
-            fontSize = Math.Max(1, fontSize);
-            lineWidth = Math.Max(1, lineWidth);
+            // 参数
+            int scaleX = int.TryParse(ScaleLengthWidthBox.Text, out int w) ? Math.Max(1, w) : 50;
+            int scaleY = int.TryParse(ScaleLengthHeightBox.Text, out int h) ? Math.Max(1, h) : 50;
+            int fontSize = int.TryParse(FontSizeBox.Text, out int f) ? Math.Max(1, f) : 12;
+            int lineWidth = int.TryParse(ThicknessBox.Text, out int lw) ? Math.Max(1, lw) : 2;
 
             // 颜色
             Brush textBrush = Brushes.Black;
@@ -124,107 +118,66 @@ namespace WpfApp5
             }
 
             // 字体
-            FontWeight fontWeight = FontWeights.Normal;
-            if (FontWeightBox.SelectedItem is ComboBoxItem fwItem && fwItem.Content.ToString() == "加粗")
-                fontWeight = FontWeights.Bold;
+            FontWeight fontWeight = (FontWeightBox.SelectedItem as ComboBoxItem)?.Content.ToString() == "加粗"
+                ? FontWeights.Bold : FontWeights.Normal;
 
-            bool showFont = true;
-            if (FontVisibilityBox.SelectedItem is ComboBoxItem fvItem && fvItem.Content.ToString() == "隐藏")
-                showFont = false;
+            bool showFont = (FontVisibilityBox.SelectedItem as ComboBoxItem)?.Content.ToString() != "隐藏";
+            string fontFamily = (FontFamilyBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Segoe UI";
 
-            string fontFamily = "Segoe UI";
-            if (FontFamilyBox.SelectedItem is ComboBoxItem ffItem)
-                fontFamily = ffItem.Content.ToString()!;
-
+            // 基础位置
             double margin = 50;
             double x = margin, y = margin;
-            bool horizontalRight = true;
-            bool verticalDown = true;
+            bool horizontalRight = true, verticalDown = true;
 
-            string position = (PositionBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
-            if (position != null)
+            string position = (PositionBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "左上";
+            switch (position)
             {
-                switch (position)
-                {
-                    case "左上": x = margin; y = margin; horizontalRight = true; verticalDown = true; break;
-                    case "右上": x = MainImage.ActualWidth - margin; y = margin; horizontalRight = false; verticalDown = true; break;
-                    case "左下": x = margin; y = MainImage.ActualHeight - margin; horizontalRight = true; verticalDown = false; break;
-                    case "右下": x = MainImage.ActualWidth - margin; y = MainImage.ActualHeight - margin; horizontalRight = false; verticalDown = false; break;
-                }
+                case "右上": x = MainImage.ActualWidth - margin; y = margin; horizontalRight = false; verticalDown = true; break;
+                case "左下": x = margin; y = MainImage.ActualHeight - margin; horizontalRight = true; verticalDown = false; break;
+                case "右下": x = MainImage.ActualWidth - margin; y = MainImage.ActualHeight - margin; horizontalRight = false; verticalDown = false; break;
+                case "左上": default: break;
             }
 
             string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "共存";
 
-            // 计算水平和垂直方向的文本尺寸
-            FormattedText horizontalFormattedText = new($"{scaleWidth} {UnitBox.Text}", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize, textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
-            FormattedText verticalFormattedText = new($"{scaleHeight} {UnitBox.Text}", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize, textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
-            double horizontalTextWidth = horizontalFormattedText.Width;
-            double horizontalTextHeight = horizontalFormattedText.Height;
-            double verticalTextWidth = verticalFormattedText.Width;
-            double verticalTextHeight = verticalFormattedText.Height;
+            // 计算文本尺寸
+            FormattedText hText = new($"{scaleX} {UnitBox.Text}", CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize,
+                textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
-            // 计算背景矩形尺寸
-            double horizontalRectWidth = scaleWidth + 10;
-            double horizontalRectHeight = lineWidth + horizontalTextHeight + 10;
-            double verticalRectWidth = lineWidth + verticalTextHeight + 10;
-            double verticalRectHeight = scaleHeight + verticalTextWidth + 10;
+            FormattedText vText = new($"{scaleY} {UnitBox.Text}", CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize,
+                textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
-            // 根据位置调整坐标
-            double horizontalX = x, horizontalY = y;
-            double verticalX = x, verticalY = y;
+            double hTextWidth = hText.Width, hTextHeight = hText.Height;
+            double vTextWidth = vText.Width, vTextHeight = vText.Height;
 
-            if (position == "右上")
-            {
-                horizontalX = x - ((drawMode == "共存" || drawMode == "水平") ? horizontalRectWidth : 0);
-                verticalX = x;
-                horizontalY = y;
-                verticalY = y + (horizontalTextHeight / 2);
-            }
-            else if (position == "左下")
-            {
-                horizontalX = x;
-                verticalX = x + (verticalTextHeight / 2);
-                horizontalY = y - ((drawMode == "共存" || drawMode == "竖直") ? verticalRectHeight : 0);
-                verticalY = y;
-            }
-            else if (position == "右下")
-            {
-                horizontalX = x - ((drawMode == "共存" || drawMode == "水平") ? horizontalRectWidth : 0);
-                verticalX = x;
-                horizontalY = y - ((drawMode == "共存" || drawMode == "竖直") ? verticalRectHeight : 0);
-                verticalY = y;
-            }
-            else if (position == "左上")
-            {
-                horizontalX = x;
-                verticalX = x + (verticalTextHeight / 2);
-                horizontalY = y;
-                verticalY = y + (horizontalTextHeight / 2);
-            }
+            // 绘制
+            if (drawMode is "共存" or "水平")
+                DrawScale(true, scaleX, x, y, horizontalRight, verticalDown,
+                    textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, hTextWidth, hTextHeight);
 
-            // 绘制水平比例尺
-            if (drawMode == "共存" || drawMode == "水平")
-            {
-                DrawScale(true, scaleWidth, horizontalX, horizontalY, horizontalRight, verticalDown, textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, horizontalTextWidth, horizontalTextHeight);
-            }
-
-            // 绘制垂直比例尺
-            if (drawMode == "共存" || drawMode == "竖直")
-            {
-                DrawScale(false, scaleHeight, verticalX, verticalY, horizontalRight, verticalDown, textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, verticalTextWidth, verticalTextHeight);
-            }
+            if (drawMode is "共存" or "竖直")
+                DrawScale(false, scaleY, x, y, horizontalRight, verticalDown,
+                    textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, vTextWidth, vTextHeight);
         }
 
-        private void DrawScale(bool horizontal, int length, double x, double y, bool horizontalRight, bool verticalDown, Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont, string fontFamily, int fontSize, int lineWidth, double textWidth, double textHeight)
+        private void DrawScale(
+            bool horizontal, int length, double x, double y,
+            bool horizontalRight, bool verticalDown,
+            Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont,
+            string fontFamily, int fontSize, int lineWidth,
+            double textWidth, double textHeight)
         {
             double lineOffset = lineWidth / 2;
-            double rectX, rectY, rectWidth, rectHeight;
+            double rectWidth, rectHeight, rectX, rectY;
 
             if (horizontal)
             {
-                rectWidth = Math.Max(showFont ? textWidth : 0, length) + 10;//length+10
+                double maxLen = Math.Max(showFont ? textWidth : 0, length);
+                rectWidth = maxLen + 10;
                 rectHeight = lineWidth + (showFont ? textHeight : 0) + 10;
-                rectX = horizontalRight ? x - 5 : x- Math.Max(showFont ? textWidth : 0, length) - 5;
+                rectX = horizontalRight ? x - 5 : x - maxLen - 5;
                 rectY = verticalDown ? y - (showFont ? textHeight : 0) - 5 : y - lineWidth - 5;
             }
             else
@@ -235,26 +188,17 @@ namespace WpfApp5
                 rectY = verticalDown ? y - 5 : y - length - 5;
             }
 
-            // 绘制背景矩形
-            var rect = new Rectangle
-            {
-                Width = rectWidth,
-                Height = rectHeight,
-                Fill = bgBrush,
-            };
+            // 背景
+            var rect = new Rectangle { Width = rectWidth, Height = rectHeight, Fill = bgBrush };
             Canvas.SetLeft(rect, rectX);
             Canvas.SetTop(rect, rectY);
             OverlayCanvas.Children.Add(rect);
 
-            // 绘制线条
-            var line = new Line
-            {
-                Stroke = textBrush,
-                StrokeThickness = lineWidth
-            };
+            // 线条
+            var line = new Line { Stroke = textBrush, StrokeThickness = lineWidth };
             OverlayCanvas.Children.Add(line);
 
-            // 绘制文字
+            // 标签
             var label = new TextBlock
             {
                 Text = $"{length} {UnitBox.Text}",
@@ -272,9 +216,8 @@ namespace WpfApp5
                 line.X2 = horizontalRight ? x + length : x;
                 line.Y1 = line.Y2 = verticalDown ? y + lineOffset : y - lineOffset;
 
-                double lx = (line.X1 + line.X2) / 2 - textWidth / 2;//字体
+                double lx = (line.X1 + line.X2) / 2 - textWidth / 2;
                 double ly = verticalDown ? y - textHeight : y;
-
                 Canvas.SetLeft(label, lx);
                 Canvas.SetTop(label, ly);
             }
@@ -284,16 +227,14 @@ namespace WpfApp5
                 line.Y2 = verticalDown ? y + length : y;
                 line.X1 = line.X2 = horizontalRight ? x + lineOffset : x - lineOffset;
 
-                double lx = horizontalRight ? x - textHeight : x;//字体
+                double lx = horizontalRight ? x - textHeight : x;
                 double ly = (line.Y1 + line.Y2) / 2 + textWidth / 2;
-
                 label.RenderTransform = new RotateTransform(-90);
                 label.RenderTransformOrigin = new Point(0, 0);
-
                 Canvas.SetLeft(label, lx);
                 Canvas.SetTop(label, ly);
             }
         }
- 
+
     }
 }
