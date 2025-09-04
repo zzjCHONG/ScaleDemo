@@ -156,8 +156,8 @@ namespace WpfApp5
             string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "共存";
 
             // 计算水平和垂直方向的文本尺寸
-            FormattedText horizontalFormattedText = new($"{scaleWidth} px", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize, textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
-            FormattedText verticalFormattedText = new($"{scaleHeight} px", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize, textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            FormattedText horizontalFormattedText = new($"{scaleWidth} {UnitBox.Text}", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize, textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            FormattedText verticalFormattedText = new($"{scaleHeight} {UnitBox.Text}", CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize, textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
             double horizontalTextWidth = horizontalFormattedText.Width;
             double horizontalTextHeight = horizontalFormattedText.Height;
             double verticalTextWidth = verticalFormattedText.Width;
@@ -222,10 +222,10 @@ namespace WpfApp5
 
             if (horizontal)
             {
-                rectWidth = length + 10;
+                rectWidth = Math.Max(showFont ? textWidth : 0, length) + 10;//length+10
                 rectHeight = lineWidth + (showFont ? textHeight : 0) + 10;
-                rectX = horizontalRight ? x - 5 : x - length - 5;
-                rectY = verticalDown ? y- (showFont ? textHeight : 0) - 5 : y - lineWidth - 5;
+                rectX = horizontalRight ? x - 5 : x- Math.Max(showFont ? textWidth : 0, length) - 5;
+                rectY = verticalDown ? y - (showFont ? textHeight : 0) - 5 : y - lineWidth - 5;
             }
             else
             {
@@ -272,7 +272,7 @@ namespace WpfApp5
                 line.X2 = horizontalRight ? x + length : x;
                 line.Y1 = line.Y2 = verticalDown ? y + lineOffset : y - lineOffset;
 
-                double lx = (line.X1 + line.X2) / 2 - textWidth / 4 * 3;
+                double lx = (line.X1 + line.X2) / 2 - textWidth / 2;//字体
                 double ly = verticalDown ? y - textHeight : y;
 
                 Canvas.SetLeft(label, lx);
@@ -284,8 +284,8 @@ namespace WpfApp5
                 line.Y2 = verticalDown ? y + length : y;
                 line.X1 = line.X2 = horizontalRight ? x + lineOffset : x - lineOffset;
 
-                double lx = horizontalRight ? x - textHeight : x;
-                double ly = (line.Y1 + line.Y2) / 2 + textWidth / 4 * 3;
+                double lx = horizontalRight ? x - textHeight : x;//字体
+                double ly = (line.Y1 + line.Y2) / 2 + textWidth / 2;
 
                 label.RenderTransform = new RotateTransform(-90);
                 label.RenderTransformOrigin = new Point(0, 0);
