@@ -83,8 +83,28 @@ namespace WpfApp5
             OverlayCanvas.Children.Clear();
 
             // 参数
-            int scaleX = int.TryParse(ScaleLengthWidthBox.Text, out int w) ? Math.Max(1, w) : 50;
-            int scaleY = int.TryParse(ScaleLengthHeightBox.Text, out int h) ? Math.Max(1, h) : 50;
+
+            int scaleX = 0;
+            int scaleY = 0;
+            double unitX = 0;
+            double unitY = 0;
+
+            bool isSetScaleMode = IsSetScaleModeCheckBox.IsChecked ?? true; ;
+            if (isSetScaleMode)
+            {
+                unitX = double.TryParse(WidthinUnitBox.Text, out double w) ? Math.Max(1, w) : 1;
+                unitY = double.TryParse(HeightinUnitBox.Text, out double h) ? Math.Max(1, h) : 1;
+                var scale = double.TryParse(ScaleBox.Text, out double k) ? Math.Max(0, k) : 1;
+                var pixelAspectRatio = double.TryParse(PixelAspectRatioBox.Text, out double j) ? Math.Max(0, j) : 1;//宽高比
+                scaleX = (int)Math.Round(unitX * scale);
+                scaleY = (int)Math.Round(unitY * scale * pixelAspectRatio);
+            }
+            else
+            {
+                scaleX = int.TryParse(ScaleLengthWidthBox.Text, out int w) ? Math.Max(1, w) : 50;
+                scaleY = int.TryParse(ScaleLengthHeightBox.Text, out int h) ? Math.Max(1, h) : 50;
+            }
+
             int fontSize = int.TryParse(FontSizeBox.Text, out int f) ? Math.Max(1, f) : 12;
             int lineWidth = int.TryParse(ThicknessBox.Text, out int lw) ? Math.Max(1, lw) : 2;
 
@@ -153,12 +173,15 @@ namespace WpfApp5
                 case "左上": default: break;
             }
 
+            string texttoFormatX = isSetScaleMode? $"{unitX} {UnitBox.Text}" : $"{scaleX} Pixel";
+            string texttoFormatY = isSetScaleMode ? $"{unitY} {UnitBox.Text}" : $"{scaleY} Pixel";
+
             // 计算文本尺寸
-            FormattedText hText = new($"{scaleX} {UnitBox.Text}", CultureInfo.CurrentCulture,
+            FormattedText hText = new(texttoFormatX, CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize,
                 textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
-            FormattedText vText = new($"{scaleY} {UnitBox.Text}", CultureInfo.CurrentCulture,
+            FormattedText vText = new(texttoFormatY, CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize,
                 textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
 
@@ -169,17 +192,17 @@ namespace WpfApp5
             string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
             if (drawMode is "共存" or "水平")
                 DrawScale(true, scaleX, x, y, horizontalRight, verticalDown,
-                    textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, hTextWidth, hTextHeight);
+                    textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, hTextWidth, hTextHeight, texttoFormatX, texttoFormatY);
 
             if (drawMode is "共存" or "竖直")
                 DrawScale(false, scaleY, x, y, horizontalRight, verticalDown,
-                    textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, vTextWidth, vTextHeight);
+                    textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, vTextWidth, vTextHeight, texttoFormatX, texttoFormatY);
         }
 
         private void DrawScale(
             bool horizontal, int length, double x, double y, bool horizontalRight, bool verticalDown,
             Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont,
-            string fontFamily, int fontSize, int lineWidth, double textWidth, double textHeight)
+            string fontFamily, int fontSize, int lineWidth, double textWidth, double textHeight, string texttoFormatX,  string texttoFormatY)
         {
             string drawMode = (DrawModeBox.SelectedItem as ComboBoxItem)?.Content.ToString()!;
 
@@ -237,7 +260,7 @@ namespace WpfApp5
             // 标签
             var label = new TextBlock
             {
-                Text = $"{length} {UnitBox.Text}",
+                Text = horizontal ? texttoFormatX : texttoFormatY,//$"{length} {UnitBox.Text}"
                 FontSize = fontSize,
                 Foreground = textBrush,
                 FontWeight = fontWeight,
