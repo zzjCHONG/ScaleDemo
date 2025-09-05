@@ -215,16 +215,17 @@ namespace WpfApp5
                 bgWidth = lineWidth + (showFont ? textHeight : 0) + 2 * margin;
                 bgHeight = maxLen + 2 * margin;
 
-                //if (drawMode is "共存")
-                //    offset = bgWidth-(showFont ? textHeight : 0);
+                if (drawMode is "共存")
+                    //offset = bgWidth - (showFont ? textHeight : 0);
+                    offset = 15;
 
                 bgLeft = horizontalRight
-                    ? x - (showFont ? textHeight : 0) - margin-offset
+                    ? x - (showFont ? textHeight : 0) - margin - offset
                     : x - lineWidth - margin + offset;
 
                 bgTop = verticalDown
-                    ? y - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
-                    : y - length - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
+                    ? y - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0) + offset
+                    : y - length - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0) - offset;
             }
 
             // 背景
@@ -263,12 +264,13 @@ namespace WpfApp5
             }
             else
             {
-                line.Y1 = verticalDown ? y : y - length;
-                line.Y2 = verticalDown ? y + length : y;
+                line.Y1 = verticalDown ? y+offset : y - length-offset;
+                line.Y2 = verticalDown ? y + offset + length : y - offset;
+
                 line.X1 = line.X2 = horizontalRight ? x + halfLine - offset : x - halfLine + offset;
 
                 labelLeft = horizontalRight ? x - textHeight - offset : x + offset;
-                labelTop = (line.Y1 + line.Y2) / 2 + textWidth / 2;
+                labelTop = (line.Y1 + line.Y2) / 2 + textWidth / 2 ;
 
                 label.RenderTransform = new RotateTransform(-90);
                 label.RenderTransformOrigin = new Point(0, 0);
