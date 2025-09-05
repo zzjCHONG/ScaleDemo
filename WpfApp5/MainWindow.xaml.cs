@@ -186,7 +186,7 @@ namespace WpfApp5
             double margin = 5;//背景相对线段的延伸量
             double halfLine = lineWidth / 2.0;
 
-            // 调整起始位置的偏移量
+            // 调整垂直线起始位置的偏移量
             double offset=0;
 
             // 背景矩形尺寸与位置
@@ -198,16 +198,13 @@ namespace WpfApp5
                 bgWidth = maxLen + 2 * margin;
                 bgHeight = lineWidth + (showFont ? textHeight : 0) + 2 * margin;
 
-                //if (drawMode is "共存")
-                //    offset = bgHeight - (showFont ? textHeight : 0);
-
                 bgLeft = horizontalRight
                     ? x - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
                     : x - length - margin - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
 
                 bgTop = verticalDown
-                    ? y - (showFont ? textHeight : 0) - margin - offset
-                    : y - lineWidth - margin + offset;
+                    ? y - (showFont ? textHeight : 0) - margin
+                    : y - lineWidth - margin;
             }
             else
             {
@@ -216,7 +213,6 @@ namespace WpfApp5
                 bgHeight = maxLen + 2 * margin;
 
                 if (drawMode is "共存")
-                    //offset = bgWidth - (showFont ? textHeight : 0);
                     offset = 15;
 
                 bgLeft = horizontalRight
@@ -257,10 +253,10 @@ namespace WpfApp5
             {
                 line.X1 = horizontalRight ? x : x - length;
                 line.X2 = horizontalRight ? x + length : x;
-                line.Y1 = line.Y2 = verticalDown ? y + halfLine - offset : y - halfLine + offset;
+                line.Y1 = line.Y2 = verticalDown ? y + halfLine: y - halfLine;
 
                 labelLeft = (line.X1 + line.X2) / 2 - textWidth / 2;
-                labelTop = verticalDown ? y - textHeight - offset : y + offset;
+                labelTop = verticalDown ? y - textHeight : y;
             }
             else
             {
