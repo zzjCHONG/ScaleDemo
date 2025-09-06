@@ -21,7 +21,6 @@
                                 Stretch="Uniform">
 
                                 <Grid>
-
                                     <Image
                                         x:Name="PART_IMAGEMAIN"
                                         RenderOptions.BitmapScalingMode="NearestNeighbor"

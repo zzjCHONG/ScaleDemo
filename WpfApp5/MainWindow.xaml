@@ -32,13 +32,13 @@
             <TextBlock Text="字体大小:" />
             <TextBox
                 x:Name="FontSizeBox"
-                Text="16"
+                Text="14"
                 TextChanged="ScaleParamsChanged" />
 
             <TextBlock Text="线条宽度:" />
             <TextBox
                 x:Name="ThicknessBox"
-                Text="1"
+                Text="4"
                 TextChanged="ScaleParamsChanged" />
 
             <TextBlock Text="字体颜色:" />
@@ -119,13 +119,13 @@
             <TextBlock Text="比例尺横向长度 (像素):" />
             <TextBox
                 x:Name="ScaleLengthWidthBox"
-                Text="100"
+                Text="50"
                 TextChanged="ScaleParamsChanged" />
 
             <TextBlock Text="比例尺纵向长度 (像素):" />
             <TextBox
                 x:Name="ScaleLengthHeightBox"
-                Text="100"
+                Text="50"
                 TextChanged="ScaleParamsChanged" />
 
             <CheckBox
