@@ -1,14 +1,6 @@
 ﻿using Microsoft.Win32;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace ScaleBarExDemo
 {
@@ -44,6 +36,11 @@ namespace ScaleBarExDemo
                     MessageBox.Show("加载图片失败: " + ex.Message, "错误", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        private void ExportImage_Click(object sender, RoutedEventArgs e)
+        {
+            
         }
     }
 }

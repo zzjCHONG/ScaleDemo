@@ -36,7 +36,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="300" />
         </Grid.ColumnDefinitions>
 
         <!--  左侧：ScaleBarEx 控件  -->
@@ -56,7 +56,6 @@
             VerticalAlignment="Stretch"
             Background="LightGray" />
 
-        <!--  右侧：属性设置面板  -->
         <ScrollViewer
             Grid.Column="2"
             Margin="5"
@@ -67,6 +66,10 @@
                     Margin="0,5,0,10"
                     Click="LoadImage_Click"
                     Content="加载图片" />
+                <Button
+                    Margin="0,5,0,10"
+                    Click="ExportImage_Click"
+                    Content="导出带比例尺图像" />
 
                 <TextBlock Style="{StaticResource HeaderTextStyle}" Text="通用比例尺设置" />
                 <Grid Margin="0,5">
@@ -117,13 +120,15 @@
                         Grid.Row="2"
                         Grid.Column="1"
                         SelectedIndex="0"
-                        SelectedValue="{Binding ElementName=myScaleBar, Path=TextBrush, Mode=TwoWay}">
-                        <SolidColorBrush Color="White" />
-                        <SolidColorBrush Color="Black" />
-                        <SolidColorBrush Color="Red" />
-                        <SolidColorBrush Color="Green" />
-                        <SolidColorBrush Color="Blue" />
+                        SelectedValue="{Binding ElementName=myScaleBar, Path=TextBrush, Mode=TwoWay}"
+                        SelectedValuePath="Tag">
+                        <ComboBoxItem Content="白色" Tag="{x:Static Brushes.White}" />
+                        <ComboBoxItem Content="黑色" Tag="{x:Static Brushes.Black}" />
+                        <ComboBoxItem Content="红色" Tag="{x:Static Brushes.Red}" />
+                        <ComboBoxItem Content="绿色" Tag="{x:Static Brushes.Green}" />
+                        <ComboBoxItem Content="蓝色" Tag="{x:Static Brushes.Blue}" />
                     </ComboBox>
+
 
                     <Label
                         Grid.Row="3"
@@ -134,11 +139,12 @@
                         Grid.Row="3"
                         Grid.Column="1"
                         SelectedIndex="0"
-                        SelectedValue="{Binding ElementName=myScaleBar, Path=BackgroundBrush, Mode=TwoWay}">
-                        <SolidColorBrush Color="Gray" />
-                        <SolidColorBrush Color="Transparent" />
-                        <SolidColorBrush Color="LightGray" />
-                        <SolidColorBrush Color="DarkBlue" />
+                        SelectedValue="{Binding ElementName=myScaleBar, Path=BackgroundBrush, Mode=TwoWay}"
+                        SelectedValuePath="Tag">
+                        <ComboBoxItem Content="灰色" Tag="{x:Static Brushes.Gray}" />
+                        <ComboBoxItem Content="透明" Tag="{x:Static Brushes.Transparent}" />
+                        <ComboBoxItem Content="浅灰色" Tag="{x:Static Brushes.LightGray}" />
+                        <ComboBoxItem Content="深蓝色" Tag="{x:Static Brushes.DarkBlue}" />
                     </ComboBox>
 
                     <Label
@@ -149,10 +155,12 @@
                     <ComboBox
                         Grid.Row="4"
                         Grid.Column="1"
-                        SelectedValue="{Binding ElementName=myScaleBar, Path=FontWeight, Mode=TwoWay}">
-                        <FontWeight>Normal</FontWeight>
-                        <FontWeight>Bold</FontWeight>
-                        <FontWeight>Light</FontWeight>
+                        SelectedIndex="0"
+                        SelectedValue="{Binding ElementName=myScaleBar, Path=FontWeight, Mode=TwoWay}"
+                        SelectedValuePath="Tag">
+                        <ComboBoxItem Content="正常" Tag="Normal" />
+                        <ComboBoxItem Content="加粗" Tag="Bold" />
+                        <ComboBoxItem Content="细体" Tag="Light" />
                     </ComboBox>
 
                     <Label
@@ -163,21 +171,26 @@
                     <ComboBox
                         Grid.Row="5"
                         Grid.Column="1"
-                        SelectedValue="{Binding ElementName=myScaleBar, Path=FontVisibility, Mode=TwoWay}">
-                        <Visibility>Visible</Visibility>
-                        <Visibility>Collapsed</Visibility>
-                        <Visibility>Hidden</Visibility>
+                        SelectedIndex="0"
+                        SelectedValue="{Binding ElementName=myScaleBar, Path=FontVisibility, Mode=TwoWay}"
+                        SelectedValuePath="Tag">
+                        <ComboBoxItem Content="可见" Tag="Visible" />
+                        <ComboBoxItem Content="折叠" Tag="Collapsed" />
+                        <ComboBoxItem Content="隐藏" Tag="Hidden" />
                     </ComboBox>
 
-                    <Label
-                        Grid.Row="6"
-                        Grid.Column="0"
-                        VerticalAlignment="Center"
-                        Content="字体类型:" />
-                    <TextBox
-                        Grid.Row="6"
-                        Grid.Column="1"
-                        Text="{Binding ElementName=myScaleBar, Path=FontFamily, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Text="字体类型:" />
+                    <ComboBox
+                        x:Name="FontFamilyBox"
+                        SelectedIndex="0"
+                        SelectedValue="{Binding ElementName=myScaleBar, Path=FontFamily, Mode=TwoWay}"
+                        SelectedValuePath="Tag">
+                        <ComboBoxItem Content="Arial" Tag="Arial" />
+                        <ComboBoxItem Content="Times New Roman" Tag="Times New Roman" />
+                        <ComboBoxItem Content="Consolas" Tag="Consolas" />
+                        <ComboBoxItem Content="Microsoft YaHei" Tag="Microsoft YaHei" />
+                        <ComboBoxItem Content="SimSun" Tag="SimSun" />
+                    </ComboBox>
 
                     <Label
                         Grid.Row="7"
