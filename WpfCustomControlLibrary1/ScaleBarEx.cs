@@ -5,12 +5,59 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes; // 引入 Line 和 Rectangle 控件
+using System.Windows.Shapes; // 引入 Shape 命名空间
 
 namespace WpfCustomControlLibrary1
 {
     public class ScaleBarEx : ContentControl
     {
+        // 静态构造函数，用于覆盖默认样式键
+        static ScaleBarEx()
+        {
+            DefaultStyleKeyProperty.OverrideMetadata(typeof(ScaleBarEx), new FrameworkPropertyMetadata(typeof(ScaleBarEx)));
+        }
+
+        // 构造函数，用于订阅 Loaded/Unloaded 事件
+        public ScaleBarEx()
+        {
+            // 在控件加载时订阅事件
+            this.Loaded += ScaleBarEx_Loaded;
+            // 在控件卸载时取消订阅事件
+            this.Unloaded += ScaleBarEx_Unloaded;
+        }
+
+        // 控件加载事件处理
+        private void ScaleBarEx_Loaded(object sender, RoutedEventArgs e)
+        {
+            // 确保控件模板已应用
+            if (MainPanel != null) MainPanel.MouseWheel += OnZoomChanged;
+            if (Scroll != null)
+            {
+                Scroll.MouseMove += OnMouseMove;
+                Scroll.PreviewMouseDown += OnPreviewMouseDown;
+                Scroll.PreviewMouseUp += OnPreviewMouseUp;
+            }
+        }
+
+        // 控件卸载事件处理
+        private void ScaleBarEx_Unloaded(object sender, RoutedEventArgs e)
+        {
+            // 取消事件订阅，防止内存泄漏
+            if (MainPanel != null) MainPanel.MouseWheel -= OnZoomChanged;
+            if (Scroll != null)
+            {
+                Scroll.MouseMove -= OnMouseMove;
+                Scroll.PreviewMouseDown -= OnPreviewMouseDown;
+                Scroll.PreviewMouseUp -= OnPreviewMouseUp;
+            }
+            // 也可以在这里取消对 Loaded/Unloaded 事件自身的订阅，但通常不是必须的
+            this.Loaded -= ScaleBarEx_Loaded;
+            this.Unloaded -= ScaleBarEx_Unloaded;
+        }
+
+        // 移除析构函数，因为事件已通过 Loaded/Unloaded 管理
+        // ~ScaleBarEx() { }
+
         public override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
@@ -21,15 +68,12 @@ namespace WpfCustomControlLibrary1
             Canvas = Template.FindName(NamePartCanvas, this) as Canvas;
             ImageMain = Template.FindName(NamePartImage, this) as Image; // 获取Image控件
 
-            OnViewerLoad();
             // 第一次应用模板时，更新图片信息并绘制比例尺
             // 这会设置Canvas的尺寸并调用 UpdateScaleBarElements
             UpdateImageInfo();
         }
 
-        // 移除 OnRender 方法中关于比例尺的绘制。
-        // 现在比例尺是Canvas的子元素，由Canvas自身渲染。
-        // OnRender 仍然会被调用，但不再用于绘制比例尺本身。
+        // OnRender 方法不再用于绘制比例尺，因为比例尺是 Canvas 的子元素
         protected override void OnRender(DrawingContext drawingContext)
         {
             base.OnRender(drawingContext);
@@ -37,19 +81,7 @@ namespace WpfCustomControlLibrary1
             // 但不应再绘制比例尺。
         }
 
-        static ScaleBarEx()
-        {
-            DefaultStyleKeyProperty.OverrideMetadata(typeof(ScaleBarEx), new FrameworkPropertyMetadata(typeof(ScaleBarEx)));
-        }
-
-        // 注意：析构函数在.NET中不保证何时调用，通常不用于资源清理。
-        // 对于WPF控件，更推荐在 Loaded/Unloaded 事件中管理事件订阅。
-        ~ScaleBarEx()
-        {
-            OnUnload();
-        }
-
-        #region Name
+        #region Name Parts
 
         private Panel? MainPanel;
         private ScrollViewer? Scroll;
@@ -65,7 +97,7 @@ namespace WpfCustomControlLibrary1
 
         #endregion
 
-        #region Render Size Info
+        #region Render Size Info (Zoom & Pan)
 
         double DefaultImagePanelScale = 0; // 图片在控件内“平铺”时的缩放比例
         (double Width, double Height) DefaultImageSize; // 图片的原始尺寸
@@ -235,30 +267,6 @@ namespace WpfCustomControlLibrary1
             Scroll.ScrollToVerticalOffset(Scroll.VerticalOffset - offset.Y);
         }
 
-        private void OnViewerLoad()
-        {
-            // 订阅事件，确保控件加载后功能可用
-            if (MainPanel != null) MainPanel.MouseWheel += OnZoomChanged;
-            if (Scroll != null)
-            {
-                Scroll.MouseMove += OnMouseMove;
-                Scroll.PreviewMouseDown += OnPreviewMouseDown;
-                Scroll.PreviewMouseUp += OnPreviewMouseUp;
-            }
-        }
-
-        private void OnUnload()
-        {
-            // 取消事件订阅，防止内存泄漏
-            if (MainPanel != null) MainPanel.MouseWheel -= OnZoomChanged;
-            if (Scroll != null)
-            {
-                Scroll.MouseMove -= OnMouseMove;
-                Scroll.PreviewMouseDown -= OnPreviewMouseDown;
-                Scroll.PreviewMouseUp -= OnPreviewMouseUp;
-            }
-        }
-
         #endregion
 
         #region DependencyProperty
@@ -270,7 +278,7 @@ namespace WpfCustomControlLibrary1
                 //o 是更改了属性的对象，p 是一个包含旧值和新值的 DependencyPropertyChangedEventArgs 对象
 
                 if (o is not ScaleBarEx ex) return;
-                ex.UpdateImageInfo();
+                ex.UpdateImageInfo(); // 更新图片信息，这将触发比例尺更新
 
                 if (p.OldValue is not BitmapSource s1)
                 {
@@ -281,7 +289,7 @@ namespace WpfCustomControlLibrary1
                 if (p.NewValue is not BitmapSource s2)
                     return;
 
-                //差异超过0.001，则触发
+                // 差异超过0.001，则触发平铺
                 if (Math.Abs(s1.Width - s2.Width) > 0.001
                     || Math.Abs(s1.Height - s2.Height) > 0.001) ex.TileImage();
 
@@ -304,7 +312,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty ScaleLengthWidthProperty =
-            DependencyProperty.Register("ScaleLengthWidth", typeof(int), typeof(ScaleBarEx), new FrameworkPropertyMetadata(50, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("ScaleLengthWidth", typeof(int), typeof(ScaleBarEx), new FrameworkPropertyMetadata(50, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 比例尺纵向长度（像素）
@@ -317,7 +325,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty ScaleLengthHeightProperty =
-            DependencyProperty.Register("ScaleLengthHeight", typeof(int), typeof(ScaleBarEx), new FrameworkPropertyMetadata(50, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("ScaleLengthHeight", typeof(int), typeof(ScaleBarEx), new FrameworkPropertyMetadata(50, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 字体大小
@@ -329,7 +337,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static new readonly DependencyProperty FontSizeProperty =
-            DependencyProperty.Register("FontSize", typeof(int), typeof(ScaleBarEx), new FrameworkPropertyMetadata(14, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("FontSize", typeof(int), typeof(ScaleBarEx), new FrameworkPropertyMetadata(14, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 线条宽度
@@ -341,7 +349,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty LineWidthProperty =
-            DependencyProperty.Register("LineWidth", typeof(int), typeof(ScaleBarEx), new FrameworkPropertyMetadata(4, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("LineWidth", typeof(int), typeof(ScaleBarEx), new FrameworkPropertyMetadata(4, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 字体颜色
@@ -353,7 +361,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty TextBrushProperty =
-            DependencyProperty.Register("TextBrush", typeof(Brush), typeof(ScaleBarEx), new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("TextBrush", typeof(Brush), typeof(ScaleBarEx), new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 背景颜色
@@ -365,7 +373,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty BackgroundBrushProperty =
-            DependencyProperty.Register("BackgroundBrush", typeof(Brush), typeof(ScaleBarEx), new FrameworkPropertyMetadata(Brushes.Gray, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("BackgroundBrush", typeof(Brush), typeof(ScaleBarEx), new FrameworkPropertyMetadata(Brushes.Gray, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 字体样式
@@ -377,7 +385,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static new readonly DependencyProperty FontWeightProperty =
-            DependencyProperty.Register("FontWeight", typeof(FontWeight), typeof(ScaleBarEx), new FrameworkPropertyMetadata(FontWeights.Bold, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("FontWeight", typeof(FontWeight), typeof(ScaleBarEx), new FrameworkPropertyMetadata(FontWeights.Bold, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 字体是否可见
@@ -389,7 +397,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty FontVisibilityProperty =
-            DependencyProperty.Register("FontVisibility", typeof(Visibility), typeof(ScaleBarEx), new FrameworkPropertyMetadata(Visibility.Visible, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("FontVisibility", typeof(Visibility), typeof(ScaleBarEx), new FrameworkPropertyMetadata(Visibility.Visible, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 字体类型
@@ -401,7 +409,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static new readonly DependencyProperty FontFamilyProperty =
-            DependencyProperty.Register("FontFamily", typeof(string), typeof(ScaleBarEx), new FrameworkPropertyMetadata("Segoe UI", FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("FontFamily", typeof(string), typeof(ScaleBarEx), new FrameworkPropertyMetadata("Arial", FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 摆放位置-四角
@@ -413,10 +421,10 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty PositionProperty =
-            DependencyProperty.Register("Position", typeof(string), typeof(ScaleBarEx), new FrameworkPropertyMetadata("左上", FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("Position", typeof(string), typeof(ScaleBarEx), new FrameworkPropertyMetadata("左上", FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
-        /// 绘制模式（水平/垂直）
+        /// 绘制模式（水平/垂直/共存）
         /// </summary>
         public string DrawMode
         {
@@ -425,7 +433,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty DrawModeProperty =
-            DependencyProperty.Register("DrawMode", typeof(string), typeof(ScaleBarEx), new FrameworkPropertyMetadata("水平", FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("DrawMode", typeof(string), typeof(ScaleBarEx), new FrameworkPropertyMetadata("水平", FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 是否已设置比例尺模式（显示形式有区别）
@@ -437,7 +445,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty IsSetScaleModeProperty =
-            DependencyProperty.Register("IsSetScaleMode", typeof(bool), typeof(ScaleBarEx), new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("IsSetScaleMode", typeof(bool), typeof(ScaleBarEx), new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 横向数值显示
@@ -450,7 +458,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty WidthinUnitProperty =
-            DependencyProperty.Register("WidthinUnit", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(2.0, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("WidthinUnit", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(2.0, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 纵向数值显示
@@ -463,7 +471,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty HeightinUnitProperty =
-            DependencyProperty.Register("HeightinUnit", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(2.0, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("HeightinUnit", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(2.0, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 比例尺（pixel/unit）
@@ -476,7 +484,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty ScaleProperty =
-            DependencyProperty.Register("Scale", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(50.0, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("Scale", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(50.0, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 宽高比
@@ -489,7 +497,7 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty PixelAspectRatioProperty =
-            DependencyProperty.Register("PixelAspectRatio", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(1.0, FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("PixelAspectRatio", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(1.0, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 单位
@@ -501,12 +509,15 @@ namespace WpfCustomControlLibrary1
         }
 
         public static readonly DependencyProperty UnitProperty =
-            DependencyProperty.Register("Unit", typeof(string), typeof(ScaleBarEx), new FrameworkPropertyMetadata("μm", FrameworkPropertyMetadataOptions.AffectsRender, OnRenderInvalidated));
+            DependencyProperty.Register("Unit", typeof(string), typeof(ScaleBarEx), new FrameworkPropertyMetadata("μm", FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
-
-        private static void OnRenderInvalidated(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        // 当比例尺相关属性改变时，重新绘制 Canvas 上的比例尺元素
+        private static void OnScaleBarPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            ((ScaleBarEx)d).InvalidateVisual();
+            if (d is ScaleBarEx ex)
+            {
+                ex.UpdateScaleBarElements();
+            }
         }
 
         #endregion
@@ -536,12 +547,13 @@ namespace WpfCustomControlLibrary1
             double unitX = 0;
             double unitY = 0;
 
+            // **修改位置：根据 IsSetScaleMode 计算 scaleX, scaleY, unitX, unitY**
             if (IsSetScaleMode) // 如果是设置了实际单位的比例尺模式
             {
-                unitX = WidthinUnit;
-                unitY = HeightinUnit;
-                var scale = Scale; // pixel/unit (每单位对应的像素数)
-                var pixelAspectRatio = PixelAspectRatio; // 像素宽高比
+                unitX = Math.Max(0.0, WidthinUnit);
+                unitY = Math.Max(0.0, HeightinUnit);
+                var scale = Math.Max(0.0, Scale); // pixel/unit (每单位对应的像素数)
+                var pixelAspectRatio = Math.Max(0.0, PixelAspectRatio); // 像素宽高比
 
                 // 计算在图片原始像素坐标系中的长度
                 scaleX = (int)Math.Round(unitX * scale);
@@ -550,12 +562,12 @@ namespace WpfCustomControlLibrary1
             else // 如果是纯像素模式
             {
                 // 直接使用设置的像素长度
-                scaleX = ScaleLengthWidth;
-                scaleY = ScaleLengthHeight;
+                scaleX = Math.Max(1, ScaleLengthWidth);
+                scaleY = Math.Max(1, ScaleLengthHeight);
             }
 
-            int fontSize = FontSize;
-            int lineWidth = LineWidth;
+            int fontSize = Math.Max(1, FontSize);
+            int lineWidth = Math.Max(1, LineWidth);
 
             // 颜色和字体样式
             Brush textBrush = TextBrush;
@@ -570,6 +582,9 @@ namespace WpfCustomControlLibrary1
             bool horizontalRight = true, verticalDown = true; // 默认水平向右，垂直向下绘制
 
             string position = Position;
+            if (position.Length > 2)
+                position = position.Split(':')[1].Trim();
+
             switch (position)
             {
                 case "右上":
@@ -601,24 +616,29 @@ namespace WpfCustomControlLibrary1
 
             // 计算文本尺寸 (使用 FormattedText 来预估尺寸，以便计算背景框大小)
             // FormattedText 提供了精确的文本测量，即使文本尚未渲染到 UI。
+            // 注意：FormattedText 的 DPI 参数应从 VisualTreeHelper.GetDpi(this) 获取
+            double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+
             FormattedText hText = new(texttoFormatX, CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize,
-                textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+                textBrush, dpi);
 
             FormattedText vText = new(texttoFormatY, CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize,
-                textBrush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+                textBrush, dpi);
 
             double hTextWidth = hText.Width, hTextHeight = hText.Height;
             double vTextWidth = vText.Width, vTextHeight = vText.Height; // vTextWidth 是竖直文本旋转前的宽度
 
-            // 根据 DrawMode 绘制水平或垂直比例尺
             string drawMode = DrawMode;
-            if (drawMode is "共存" or "水平")
+            if (drawMode.Length > 2)
+                drawMode = drawMode.Split(':')[1].Trim();
+
+            if (drawMode is "共存" || drawMode is "水平")
                 DrawScaleElement(true, scaleX, x, y, horizontalRight, verticalDown,
                     textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, hTextWidth, hTextHeight, texttoFormatX, texttoFormatY);
 
-            if (drawMode is "共存" or "竖直")
+            if (drawMode is "共存" || drawMode is "竖直")
                 DrawScaleElement(false, scaleY, x, y, horizontalRight, verticalDown,
                     textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, vTextWidth, vTextHeight, texttoFormatX, texttoFormatY);
         }
@@ -627,179 +647,122 @@ namespace WpfCustomControlLibrary1
         /// 创建并添加比例尺的 UI 元素 (背景矩形、线条、文本标签) 到 Canvas。
         /// 所有坐标和长度都基于 Canvas 的逻辑像素 (即图片原始像素)。
         /// </summary>
-        private void DrawScaleElement(bool horizontal, int length, double x, double y, bool horizontalRight,
-            bool verticalDown, Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont, string fontFamily, int fontSize,
-            int lineWidth, double textWidth, double textHeight, string texttoFormatX, string texttoFormatY)
+        /// <param name="horizontal">是否绘制水平比例尺</param>
+        /// <param name="length">比例尺的长度（像素）</param>
+        /// <param name="x">起始X坐标（图片原始像素坐标）</param>
+        /// <param name="y">起始Y坐标（图片原始像素坐标）</param>
+        /// <param name="horizontalRight">水平线是否向右绘制</param>
+        /// <param name="verticalDown">垂直线是否向下绘制</param>
+        /// <param name="textBrush">文本颜色</param>
+        /// <param name="bgBrush">背景颜色</param>
+        /// <param name="fontWeight">字体粗细</param>
+        /// <param name="showFont">是否显示文本</param>
+        /// <param name="fontFamily">字体家族</param>
+        /// <param name="fontSize">字体大小</param>
+        /// <param name="lineWidth">线条宽度</param>
+        /// <param name="textWidth">文本的原始宽度 (FormattedText.Width)</param>
+        /// <param name="textHeight">文本的原始高度 (FormattedText.Height)</param>
+        /// <param name="texttoFormatX">水平比例尺的文本内容</param>
+        /// <param name="texttoFormatY">垂直比例尺的文本内容</param>
+        private void DrawScaleElement(
+            bool horizontal, int length, double x, double y, bool horizontalRight, bool verticalDown,
+            Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont,
+            string fontFamily, int fontSize, int lineWidth, double textWidth, double textHeight, string texttoFormatX, string texttoFormatY)
         {
-            double bgPadding = 5; // 背景相对线段和文本的内边距
-            double halfLineWidth = lineWidth / 2.0;
+            //todo，若字体加粗且字体字号过大，可能会出现背景无法覆盖完整的情况
+            double bgPadding =5;
+            double halfLine = lineWidth / 2.0;
 
-            // 垂直线与水平线之间的偏移量，用于“共存”模式下避免重叠
-            double verticalOffset = 0;
-            if (!horizontal && DrawMode == "共存")
-                verticalOffset = 15;
+            // 调整垂直线起始位置的偏移量
+            double offset = 0;
 
-            // --- 1. 计算背景矩形的位置和尺寸 ---
+            // 背景矩形尺寸与位置
             double bgWidth, bgHeight, bgLeft, bgTop;
 
-            if (horizontal) // 水平比例尺的背景
+            if (horizontal)
             {
-                double effectiveTextWidth = showFont ? textWidth : 0; // 文本实际宽度
-                double contentWidth = Math.Max(length, effectiveTextWidth); // 内容的最大宽度（线长或文本宽）
+                double maxLen = Math.Max(showFont ? textWidth : 0, length);
+                bgWidth = maxLen + 2 * bgPadding;
+                bgHeight = lineWidth + (showFont ? textHeight : 0) + 2 * bgPadding;
 
-                bgWidth = contentWidth + 2 * bgPadding;
-                bgHeight = lineWidth + effectiveTextWidth + 2 * bgPadding; // 线宽 + 文本高度 + 边距
+                bgLeft = horizontalRight
+                    ? x - bgPadding - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
+                    : x - length - bgPadding - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
 
-                // 计算背景矩形的左上角 X 坐标
-                if (horizontalRight) // 水平向右绘制 (左上角在 x 处)
-                {
-                    bgLeft = x - bgPadding;
-                    if (effectiveTextWidth > length) // 如果文本比线长，需要调整背景左移以居中
-                    {
-                        bgLeft -= (effectiveTextWidth - length) / 2;
-                    }
-                }
-                else // 水平向左绘制 (右上角在 x 处)
-                {
-                    bgLeft = x - length - bgPadding;
-                    if (effectiveTextWidth > length) // 如果文本比线长，需要调整背景左移以居中
-                    {
-                        bgLeft -= (effectiveTextWidth - length) / 2;
-                    }
-                }
-
-                // 计算背景矩形的左上角 Y 坐标
                 bgTop = verticalDown
-                    ? y - effectiveTextWidth - bgPadding // 文本在上方 (Y 减小)
-                    : y - lineWidth - bgPadding;         // 文本在下方 (Y 减小)
+                    ? y - (showFont ? textHeight : 0) - bgPadding
+                    : y - lineWidth - bgPadding;
             }
-            else // 垂直比例尺的背景
+            else // Vertical
             {
-                double effectiveTextHeight = showFont ? textHeight : 0; // 文本实际高度 (旋转后是宽度)
-                double effectiveTextWidthForVertical = showFont ? textWidth : 0; // 文本实际宽度 (旋转后是高度)
-                double contentHeight = Math.Max(length, effectiveTextWidthForVertical); // 内容的最大高度（线长或文本高）
+                double maxLen = Math.Max(showFont ? textWidth : 0, length);
+                bgWidth = lineWidth + (showFont ? textHeight : 0) + 2 * bgPadding;
+                bgHeight = maxLen + 2 * bgPadding;
 
-                bgWidth = lineWidth + effectiveTextHeight + 2 * bgPadding; // 线宽 + 文本高度 (旋转后) + 边距
-                bgHeight = contentHeight + 2 * bgPadding;
+                if (this.DrawMode is "共存")
+                    offset =15;
 
-                // 计算背景矩形的左上角 X 坐标
-                if (horizontalRight) // 垂直线在水平线右侧 (左上角 X 减小)
-                {
-                    bgLeft = x - effectiveTextHeight - bgPadding - verticalOffset;
-                }
-                else // 垂直线在水平线左侧 (左上角 X 增大)
-                {
-                    bgLeft = x - lineWidth - bgPadding + verticalOffset;
-                }
+                bgLeft = horizontalRight
+                    ? x - (showFont ? textHeight : 0) - bgPadding - offset
+                    : x - lineWidth - bgPadding + offset;
 
-                // 计算背景矩形的左上角 Y 坐标
                 bgTop = verticalDown
-                    ? y - bgPadding // 垂直向下绘制 (左上角在 y 处)
-                    : y - length - bgPadding; // 垂直向上绘制 (左下角在 y 处)
-
-                if (showFont && effectiveTextWidthForVertical > length) // 如果文本比线长，调整背景上移以居中
-                {
-                    bgTop -= (effectiveTextWidthForVertical - length) / 2;
-                }
+                    ? y - bgPadding - (showFont && textWidth > length ? (textWidth - length) / 2 : 0) + offset
+                    : y - length - bgPadding - (showFont && textWidth > length ? (textWidth - length) / 2 : 0) - offset;
             }
 
             // 创建并添加背景矩形
-            Rectangle backgroundRect = new Rectangle
-            {
-                Fill = bgBrush,
-                Width = bgWidth,
-                Height = bgHeight
-            };
-            Canvas.SetLeft(backgroundRect, bgLeft);
-            Canvas.SetTop(backgroundRect, bgTop);
-            Canvas?.Children.Add(backgroundRect);
+            var rect = new Rectangle { Width = bgWidth, Height = bgHeight, Fill = bgBrush };
+            Canvas.SetLeft(rect, bgLeft);
+            Canvas.SetTop(rect, bgTop);
+            Canvas?.Children.Add(rect);
 
-            // --- 2. 创建并添加线条 ---
-            Line line = new Line
-            {
-                Stroke = textBrush,
-                StrokeThickness = lineWidth,
-                StrokeStartLineCap = PenLineCap.Flat, // 线段末端样式
-                StrokeEndLineCap = PenLineCap.Flat
-            };
-
-            if (horizontal) // 水平线
-            {
-                line.X1 = horizontalRight ? x : x - length;
-                line.Y1 = verticalDown ? y + halfLineWidth : y - halfLineWidth;
-                line.X2 = horizontalRight ? x + length : x;
-                line.Y2 = line.Y1; // Y 坐标不变
-            }
-            else // 垂直线
-            {
-                line.X1 = horizontalRight ? x + halfLineWidth - verticalOffset : x - halfLineWidth + verticalOffset;
-                line.Y1 = verticalDown ? y + verticalOffset : y - length - verticalOffset;
-                line.X2 = line.X1; // X 坐标不变
-                line.Y2 = verticalDown ? y + verticalOffset + length : y - verticalOffset;
-            }
+            // 创建并添加线条
+            var line = new Line { Stroke = textBrush, StrokeThickness = lineWidth };
             Canvas?.Children.Add(line);
 
-            // --- 3. 创建并添加文本标签 ---
-            if (showFont)
+            // 创建并添加文本标签
+            var label = new TextBlock
             {
-                string textContent = horizontal ? texttoFormatX : texttoFormatY;
-                TextBlock textBlock = new TextBlock
-                {
-                    Text = textContent,
-                    Foreground = textBrush,
-                    FontFamily = new FontFamily(fontFamily),
-                    FontSize = fontSize,
-                    FontWeight = fontWeight,
-                    TextAlignment = TextAlignment.Center // 文本块内部文本居中
-                };
+                Text = horizontal ? texttoFormatX : texttoFormatY,
+                FontSize = fontSize,
+                Foreground = textBrush,
+                FontWeight = fontWeight,
+                FontFamily = new FontFamily(fontFamily),
+                Visibility = showFont ? Visibility.Visible : Visibility.Collapsed
+            };
+            Canvas?.Children.Add(label);
 
-                double labelLeft, labelTop;
+            // 坐标
+            double labelLeft, labelTop;
 
-                if (horizontal) // 水平文本
-                {
-                    // 水平文本居中于线段上方或下方
-                    labelLeft = (line.X1 + line.X2) / 2 - textWidth / 2; // X 坐标使其居中
-                    labelTop = verticalDown ? y - textHeight : y;       // Y 坐标使其位于线条上方或下方
-                }
-                else // 垂直文本 (需要旋转)
-                {
-                    // 设置旋转中心为文本块自身中心
-                    textBlock.RenderTransformOrigin = new Point(0.5, 0.5);
-                    // 旋转 -90 度 (顺时针旋转)
-                    textBlock.RenderTransform = new RotateTransform(-90);
+            if (horizontal)
+            {
+                line.X1 = horizontalRight ? x : x - length;
+                line.X2 = horizontalRight ? x + length : x;
+                line.Y1 = line.Y2 = verticalDown ? y + halfLine : y - halfLine;
 
-                    // 对于一个旋转了 -90 度的 TextBlock：
-                    // 它的视觉宽度是其原始高度 (textHeight)。
-                    // 它的视觉高度是其原始宽度 (textWidth)。
-                    double rotatedTextVisualWidth = textHeight;  // 文本旋转后的视觉宽度
-                    double rotatedTextVisualHeight = textWidth; // 文本旋转后的视觉高度
-
-                    // 计算线条的中心点，用于文本的对齐
-                    double lineCenterX = line.X1; // 垂直线的 X 坐标是固定的
-                    double lineCenterY = (line.Y1 + line.Y2) / 2.0; // 垂直线的 Y 轴中心
-
-                    if (horizontalRight) // 垂直线在图片右侧 (文本应在线条左侧)
-                    {
-                        // 文本的右边缘与线条的左边缘对齐，并考虑线条宽度和偏移量
-                        labelLeft = lineCenterX - halfLineWidth - rotatedTextVisualWidth - verticalOffset;
-                        // 文本的垂直中心与线条的垂直中心对齐
-                        labelTop = lineCenterY - rotatedTextVisualHeight / 2.0;
-                    }
-                    else // 垂直线在图片左侧 (文本应在线条右侧)
-                    {
-                        // 文本的左边缘与线条的右边缘对齐，并考虑线条宽度和偏移量
-                        labelLeft = lineCenterX + halfLineWidth + verticalOffset;
-                        // 文本的垂直中心与线条的垂直中心对齐
-                        labelTop = lineCenterY - rotatedTextVisualHeight / 2.0;
-                    }
-                }
-
-                // 将文本块添加到 Canvas
-                Canvas.SetLeft(textBlock, labelLeft);
-                Canvas.SetTop(textBlock, labelTop);
-                Canvas?.Children.Add(textBlock);
+                labelLeft = (line.X1 + line.X2) / 2 - textWidth / 2;
+                labelTop = verticalDown ? y - textHeight : y;
             }
+            else // Vertical
+            {
+                line.Y1 = verticalDown ? y + offset : y - length - offset;
+                line.Y2 = verticalDown ? y + offset + length : y - offset;
+
+                line.X1 = line.X2 = horizontalRight ? x + halfLine - offset : x - halfLine + offset;
+
+                labelLeft = horizontalRight ? x - textHeight - offset : x + offset;
+                labelTop = (line.Y1 + line.Y2) / 2 + textWidth / 2;
+
+                // **修改位置：设置旋转原点为 (0,0)**
+                label.RenderTransform = new RotateTransform(-90);
+                label.RenderTransformOrigin = new Point(0, 0);
+            }
+
+            Canvas.SetLeft(label, labelLeft);
+            Canvas.SetTop(label, labelTop);
         }
-        
     }
+
 }

@@ -1,5 +1,6 @@
 ﻿using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
+using System;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -18,11 +19,23 @@ namespace CustomLibApplyWpfApp6
         {
             InitializeComponent();
 
-            var color = _colors[1];
-            var img = new Mat(new OpenCvSharp.Size(1660, 1242), MatType.CV_8UC4,
-            new Scalar(color.B, color.G, color.R, color.A));
-            var source = img.ToWriteableBitmap(0, 0, PixelFormats.Bgr32, null);
-            scalebar.ImageSource = source;
+            bool isGene = false;
+            if (isGene)
+            {
+                var color = _colors[1];
+                var img = new Mat(new OpenCvSharp.Size(1660, 1242), MatType.CV_8UC4,
+                new Scalar(color.B, color.G, color.R, color.A));
+                var source = img.ToWriteableBitmap(0, 0, PixelFormats.Bgr32, null);
+
+                scalebar.ImageSource = source;
+            }
+            else
+            {
+                string path = @"C:\\Users\\Administrator\\Desktop\\1_DAPI-405nm_Origin.tif";
+                var mat = Cv2.ImRead(path, ImreadModes.Unchanged);
+                var source = mat.ToWriteableBitmap(0, 0, PixelFormats.Gray16, null);
+                scalebar.ImageSource = source;
+            }
         }
 
         #region

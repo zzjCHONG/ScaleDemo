@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfCustomControlLibrary1", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomLibApplyWpfApp6", "CustomLibApplyWpfApp6\CustomLibApplyWpfApp6.csproj", "{841F7770-B4D2-428F-A709-88E99DE42484}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScaleBarExDemo", "ScaleBarExDemo\ScaleBarExDemo.csproj", "{22804624-E8A1-40D4-B295-9654BD3879D1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{841F7770-B4D2-428F-A709-88E99DE42484}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{841F7770-B4D2-428F-A709-88E99DE42484}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{841F7770-B4D2-428F-A709-88E99DE42484}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22804624-E8A1-40D4-B295-9654BD3879D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22804624-E8A1-40D4-B295-9654BD3879D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22804624-E8A1-40D4-B295-9654BD3879D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22804624-E8A1-40D4-B295-9654BD3879D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
