@@ -12,7 +12,6 @@
                         HorizontalScrollBarVisibility="Hidden"
                         IsEnabled="True"
                         VerticalScrollBarVisibility="Hidden">
-
                         <local:SimplePanel x:Name="PART_MAIN_PANEL" Background="{TemplateBinding Background}">
                             <Viewbox
                                 x:Name="PART_VIEWBOX"
@@ -34,15 +33,10 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         ForceCursor="True" />
-
                                 </Grid>
-
                             </Viewbox>
-
                         </local:SimplePanel>
-
                     </ScrollViewer>
-
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
