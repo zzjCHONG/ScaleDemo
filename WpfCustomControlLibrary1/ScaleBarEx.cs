@@ -270,11 +270,9 @@ namespace WpfCustomControlLibrary1
         public static readonly DependencyProperty ImageSourceProperty =
             DependencyProperty.Register("ImageSource", typeof(ImageSource), typeof(ScaleBarEx), new PropertyMetadata(null, (o, p) =>
             {
-                //ImageSource变化时回调，平铺对象
-                //o 是更改了属性的对象，p 是一个包含旧值和新值的 DependencyPropertyChangedEventArgs 对象
-
                 if (o is not ScaleBarEx ex) return;
-                ex.UpdateImageInfo(); // 更新图片信息，这将触发比例尺更新
+
+                ex.UpdateImageInfo();// 先更新图片信息，这将触发比例尺更新
 
                 if (p.OldValue is not BitmapSource s1)
                 {
@@ -285,7 +283,7 @@ namespace WpfCustomControlLibrary1
                 if (p.NewValue is not BitmapSource s2)
                     return;
 
-                // 差异超过0.001，则触发平铺
+                // 图像切换尺寸差异，则触发平铺
                 if (Math.Abs(s1.Width - s2.Width) > 0.001
                     || Math.Abs(s1.Height - s2.Height) > 0.001) ex.TileImage();
 

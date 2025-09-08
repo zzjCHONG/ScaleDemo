@@ -39,7 +39,7 @@ namespace CustomLibApplyWpfApp6
 
                 _timer.Tick += (s, e) =>
                 {
-                    bool isGene = false;
+                    bool isGene = true;
                     if (isGene)
                     {
                         var color = _colors[(_count++) % _colors.Count];
