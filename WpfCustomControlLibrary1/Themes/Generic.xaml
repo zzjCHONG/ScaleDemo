@@ -22,7 +22,7 @@
                                 <Viewbox.RenderTransform>
                                     <TransformGroup />
                                 </Viewbox.RenderTransform>
-                                
+
                                 <Grid>
                                     <Image
                                         x:Name="PART_IMAGEMAIN"

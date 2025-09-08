@@ -6,16 +6,19 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace WpfCustomControlLibrary1
 {
     public class ScaleBarEx : ContentControl
     {
-        // 在类的顶部添加新的字段
-        private TranslateTransform _panTransform = new TranslateTransform();
-        private ScaleTransform _scaleTransform = new ScaleTransform();
-        private TransformGroup _transformGroup = new TransformGroup();
+        private readonly TranslateTransform _panTransform = new();
+        private readonly ScaleTransform _scaleTransform = new();
+        private readonly TransformGroup _transformGroup = new();
         private bool _isDragging = false;
+        private DispatcherTimer? _doubleClickTimer;
+        private bool _waitingForDoubleClick = false;
+        private bool _isUpdatingFromTransform = false;
 
         static ScaleBarEx()
         {
@@ -30,6 +33,11 @@ namespace WpfCustomControlLibrary1
             // 初始化Transform组
             _transformGroup.Children.Add(_scaleTransform);
             _transformGroup.Children.Add(_panTransform);
+
+            // 初始化双击计时器
+            _doubleClickTimer = new DispatcherTimer();
+            _doubleClickTimer.Interval = TimeSpan.FromMilliseconds(300); // 300ms 双击间隔
+            _doubleClickTimer.Tick += DoubleClickTimer_Tick;
         }
 
         private void ScaleBarEx_Loaded(object sender, RoutedEventArgs e)
@@ -51,10 +59,13 @@ namespace WpfCustomControlLibrary1
                 MainPanel.MouseMove -= OnMouseMove;
                 MainPanel.PreviewMouseDown -= OnPreviewMouseDown;
                 MainPanel.PreviewMouseUp -= OnPreviewMouseUp;
-
             }
             this.Loaded -= ScaleBarEx_Loaded;
             this.Unloaded -= ScaleBarEx_Unloaded;
+
+            // 清理计时器
+            _doubleClickTimer?.Stop();
+            _doubleClickTimer = null;
         }
 
         public override void OnApplyTemplate()
@@ -87,7 +98,7 @@ namespace WpfCustomControlLibrary1
         private ScrollViewer? Scroll;
         private Viewbox? Viewbox;
         private Canvas? Canvas;
-        private Image? ImageMain; 
+        private Image? ImageMain;
 
         public const string NamePartMainPanel = "PART_MAIN_PANEL";
         public const string NamePartScrollView = "PART_SCROLL";
@@ -113,14 +124,35 @@ namespace WpfCustomControlLibrary1
             // 计算相对于默认缩放的比例
             var scaleRatio = n / ex.DefaultImagePanelScale;
 
-            // 更新ScaleTransform
-            ex._scaleTransform.ScaleX = scaleRatio;
-            ex._scaleTransform.ScaleY = scaleRatio;
+            // 只有在不是通过Transform手动设置时才更新ScaleTransform
+            if (!ex._isUpdatingFromTransform)
+            {
+                ex._scaleTransform.ScaleX = scaleRatio;
+                ex._scaleTransform.ScaleY = scaleRatio;
+            }
 
             // 同时更新Viewbox尺寸以保持兼容性（可选）
             ex.Viewbox.Width = ex.DefaultImageSize.Width * ex.ImagePanelScale;
             ex.Viewbox.Height = ex.DefaultImageSize.Height * ex.ImagePanelScale;
         }
+
+        public double MinScale
+        {
+            get { return (double)GetValue(MinScaleProperty); }
+            set { SetValue(MinScaleProperty, value); }
+        }
+
+        public static readonly DependencyProperty MinScaleProperty =
+            DependencyProperty.Register("MinScale", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(0.5));
+
+        public double MaxScale
+        {
+            get { return (double)GetValue(MaxScaleProperty); }
+            set { SetValue(MaxScaleProperty, value); }
+        }
+
+        public static readonly DependencyProperty MaxScaleProperty =
+            DependencyProperty.Register("MaxScale", typeof(double), typeof(ScaleBarEx), new FrameworkPropertyMetadata(10.0));
 
         public double PanSensitivity
         {
@@ -142,7 +174,12 @@ namespace WpfCustomControlLibrary1
 
         private void TileImage()
         {
+            if (DefaultImagePanelScale <= 0) return;
+
+            // 直接设置到初始状态
+            _isUpdatingFromTransform = true;
             ImagePanelScale = DefaultImagePanelScale;
+            _isUpdatingFromTransform = false;
 
             // 重置所有变换
             _panTransform.X = 0;
@@ -200,7 +237,7 @@ namespace WpfCustomControlLibrary1
             if (ImageMain == null || ImageSource == null || MainPanel == null) return;
 
             var oldScale = ImagePanelScale;
-            if (oldScale <= 0) return;
+            if (oldScale <= 0 || DefaultImagePanelScale <= 0) return;
 
             // 获取鼠标相对于MainPanel的位置
             var mousePosition = e.GetPosition(MainPanel);
@@ -209,15 +246,12 @@ namespace WpfCustomControlLibrary1
             var multiplier = Math.Pow(ZoomFactor, e.Delta / 120.0);
             var newScale = oldScale * multiplier;
 
-            // 限制缩放比例
-            if (DefaultImagePanelScale > 0 && newScale < DefaultImagePanelScale * 0.2)
-            {
-                newScale = DefaultImagePanelScale * 0.2;
-            }
-            else if (DefaultImagePanelScale > 0 && newScale > DefaultImagePanelScale * 10)
-            {
-                newScale = DefaultImagePanelScale * 10;
-            }
+            // 使用用户定义的缩放限制
+            var minScaleLimit = DefaultImagePanelScale * MinScale;
+            var maxScaleLimit = DefaultImagePanelScale * MaxScale;
+
+            // 严格限制缩放比例
+            newScale = Math.Max(minScaleLimit, Math.Min(maxScaleLimit, newScale));
 
             if (Math.Abs(newScale - oldScale) < 0.0001) return;
 
@@ -230,19 +264,25 @@ namespace WpfCustomControlLibrary1
             // 计算鼠标位置相对于中心的偏移
             var mouseOffset = new Point(mousePosition.X - viewboxCenter.X, mousePosition.Y - viewboxCenter.Y);
 
-            // 应用缩放
-            _scaleTransform.ScaleX = scaleRatio * _scaleTransform.ScaleX;
-            _scaleTransform.ScaleY = scaleRatio * _scaleTransform.ScaleY;
+            // 应用缩放到ScaleTransform
+            var currentScaleRatio = _scaleTransform.ScaleX;
+            var newScaleRatio = (newScale / DefaultImagePanelScale);
+            var transformScaleRatio = newScaleRatio / currentScaleRatio;
+
+            _scaleTransform.ScaleX = newScaleRatio;
+            _scaleTransform.ScaleY = newScaleRatio;
 
             // 调整平移以保持鼠标点不动
-            var newMouseOffset = new Point(mouseOffset.X * scaleRatio, mouseOffset.Y * scaleRatio);
+            var newMouseOffset = new Point(mouseOffset.X * transformScaleRatio, mouseOffset.Y * transformScaleRatio);
             var panAdjustment = new Point(mouseOffset.X - newMouseOffset.X, mouseOffset.Y - newMouseOffset.Y);
 
             _panTransform.X += panAdjustment.X;
             _panTransform.Y += panAdjustment.Y;
 
             // 更新ImagePanelScale属性以保持一致性
+            _isUpdatingFromTransform = true;
             ImagePanelScale = newScale;
+            _isUpdatingFromTransform = false;
 
             e.Handled = true;
         }
@@ -256,22 +296,41 @@ namespace WpfCustomControlLibrary1
 
             _startCursorPos = e.GetPosition(MainPanel);
             _startPanOffset = new Point(_panTransform.X, _panTransform.Y);
-            _isDragging = true;
 
-            MainPanel.CaptureMouse();
-            e.Handled = true;
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                // 处理双击逻辑
+                if (_waitingForDoubleClick)
+                {
+                    _waitingForDoubleClick = false;
+                    _doubleClickTimer?.Stop();
+                    OnDoubleClick();
+                    e.Handled = true;
+                    return;
+                }
+                else
+                {
+                    _waitingForDoubleClick = true;
+                    _doubleClickTimer?.Start();
+                }
+
+                _isDragging = true;
+                MainPanel.CaptureMouse();
+            }
         }
 
         private void OnPreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
-            _isDragging = false;
-            _startCursorPos = new(-1, -1);
-
-            if (MainPanel != null && MainPanel.IsMouseCaptured)
+            if (_isDragging)
             {
-                MainPanel.ReleaseMouseCapture();
+                _isDragging = false;
+                _startCursorPos = new(-1, -1);
+
+                if (MainPanel != null && MainPanel.IsMouseCaptured)
+                {
+                    MainPanel.ReleaseMouseCapture();
+                }
             }
-            e.Handled = true;
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
@@ -288,6 +347,20 @@ namespace WpfCustomControlLibrary1
             _panTransform.Y = _startPanOffset.Y + totalOffset.Y * PanSensitivity;
 
             e.Handled = true;
+        }
+
+        // 双击处理方法
+        private void OnDoubleClick()
+        {
+            // 双击回到初始状态，使用平滑动画
+            TileImage();
+        }
+
+        // 双击计时器超时处理
+        private void DoubleClickTimer_Tick(object sender, EventArgs e)
+        {
+            _waitingForDoubleClick = false;
+            _doubleClickTimer?.Stop();
         }
 
         #endregion
@@ -710,7 +783,7 @@ namespace WpfCustomControlLibrary1
             string fontFamily, int fontSize, int lineWidth, double textWidth, double textHeight, string texttoFormatX, string texttoFormatY)
         {
             //todo，若字体加粗且字体字号过大，可能会出现背景无法覆盖完整的情况
-            double bgPadding =5;
+            double bgPadding = 5;
             double halfLine = lineWidth / 2.0;
 
             // 调整垂直线起始位置的偏移量
@@ -740,7 +813,7 @@ namespace WpfCustomControlLibrary1
                 bgHeight = maxLen + 2 * bgPadding;
 
                 if (this.DrawMode is "共存")
-                    offset =15;
+                    offset = 15;
 
                 bgLeft = horizontalRight
                     ? x - (showFont ? textHeight : 0) - bgPadding - offset

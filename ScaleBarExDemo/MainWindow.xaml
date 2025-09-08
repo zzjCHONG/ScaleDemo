@@ -45,7 +45,7 @@
             Margin="5"
             BorderBrush="LightGray"
             BorderThickness="1">
-            <lib:ScaleBarEx x:Name="myScaleBar" Background="DarkGray" />
+            <lib:ScaleBarEx x:Name="myScaleBar" Background="LightGray" />
         </Border>
 
         <!--  分隔条  -->
