@@ -753,5 +753,4 @@ namespace WpfCustomControlLibrary1
 
         #endregion
     }
-
 }

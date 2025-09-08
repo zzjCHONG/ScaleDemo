@@ -36,7 +36,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="400" />
         </Grid.ColumnDefinitions>
 
         <!--  左侧：ScaleBarEx 控件  -->
@@ -302,7 +302,7 @@
                     <TextBox
                         Grid.Row="0"
                         Grid.Column="1"
-                        Text="{Binding ElementName=myScaleBar, Path=WidthinUnit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        Text="{Binding ElementName=myScaleBar, Path=WidthinUnit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}" />
 
                     <Label
                         Grid.Row="1"
@@ -312,7 +312,7 @@
                     <TextBox
                         Grid.Row="1"
                         Grid.Column="1"
-                        Text="{Binding ElementName=myScaleBar, Path=HeightinUnit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        Text="{Binding ElementName=myScaleBar, Path=HeightinUnit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}" />
 
                     <Label
                         Grid.Row="2"
@@ -322,7 +322,7 @@
                     <TextBox
                         Grid.Row="2"
                         Grid.Column="1"
-                        Text="{Binding ElementName=myScaleBar, Path=Scale, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        Text="{Binding ElementName=myScaleBar, Path=Scale, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F4}" />
 
                     <Label
                         Grid.Row="3"
@@ -332,7 +332,7 @@
                     <TextBox
                         Grid.Row="3"
                         Grid.Column="1"
-                        Text="{Binding ElementName=myScaleBar, Path=PixelAspectRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        Text="{Binding ElementName=myScaleBar, Path=PixelAspectRatio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}" />
                 </Grid>
             </StackPanel>
         </ScrollViewer>
