@@ -19,22 +19,67 @@ namespace CustomLibApplyWpfApp6
         {
             InitializeComponent();
 
-            bool isGene = false;
-            if (isGene)
-            {
-                var color = _colors[1];
-                var img = new Mat(new OpenCvSharp.Size(1660, 1242), MatType.CV_8UC4,
-                new Scalar(color.B, color.G, color.R, color.A));
-                var source = img.ToWriteableBitmap(0, 0, PixelFormats.Bgr32, null);
+            bool isMulImg = true;
 
-                scalebar.ImageSource = source;
+            if (isMulImg)
+            {
+                int _imageIndex = 0;
+
+                _timer = new DispatcherTimer()
+                {
+                    Interval = TimeSpan.FromSeconds(0.3)
+                };
+
+                string[] _imagePaths = new[]
+                {
+                  "E:\\imagesource\\自研探测器采图\\20250527\\512-NEW.tif",
+                  "E:\\imagesource\\自研探测器采图\\20250527\\20250528_10_21_19.tif",
+                  "E:\\imagesource\\自研探测器采图\\20250527\\20250528_10_02_58.tif"
+                };
+
+                _timer.Tick += (s, e) =>
+                {
+                    bool isGene = false;
+                    if (isGene)
+                    {
+                        var color = _colors[(_count++) % _colors.Count];
+                        var img = new Mat(new OpenCvSharp.Size(1660, 1242), MatType.CV_8UC4,
+                        new Scalar(color.B, color.G, color.R, color.A));
+
+                        var source = img.ToWriteableBitmap(0, 0, PixelFormats.Bgr32, null);
+                        scalebar.ImageSource = source;
+                    }
+                    else
+                    {
+                        string path = _imagePaths[_imageIndex % _imagePaths.Length];
+                        _imageIndex++;
+                        var mat = Cv2.ImRead(path, ImreadModes.Unchanged);
+                        var source = mat.ToBitmapSource();
+                        scalebar.ImageSource = source;
+                    }
+                };
+
+                _timer.Start();
             }
             else
             {
-                string path = @"C:\\Users\\Administrator\\Desktop\\1_DAPI-405nm_Origin.tif";
-                var mat = Cv2.ImRead(path, ImreadModes.Unchanged);
-                var source = mat.ToWriteableBitmap(0, 0, PixelFormats.Gray16, null);
-                scalebar.ImageSource = source;
+                bool isGene = true;
+                if (isGene)
+                {
+                    var color = _colors[1];
+                    var img = new Mat(new OpenCvSharp.Size(800, 800), MatType.CV_8UC4,
+                    new Scalar(color.B, color.G, color.R, color.A));
+                    var source = img.ToWriteableBitmap(0, 0, PixelFormats.Bgr32, null);
+
+                    scalebar.ImageSource = source;
+                }
+                else
+                {
+                    string path = @"C:\\Users\\Administrator\\Desktop\\1_DAPI-405nm_Origin.tif";
+                    var mat = Cv2.ImRead(path, ImreadModes.Unchanged);
+                    var source = mat.ToWriteableBitmap(0, 0, PixelFormats.Gray16, null);
+                    scalebar.ImageSource = source;
+                }
             }
         }
 

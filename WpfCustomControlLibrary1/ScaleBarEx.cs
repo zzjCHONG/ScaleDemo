@@ -18,15 +18,12 @@ namespace WpfCustomControlLibrary1
 
         public ScaleBarEx()
         {
-            // 在控件加载时订阅事件
             this.Loaded += ScaleBarEx_Loaded;
-            // 在控件卸载时取消订阅事件
             this.Unloaded += ScaleBarEx_Unloaded;
         }
 
         private void ScaleBarEx_Loaded(object sender, RoutedEventArgs e)
         {
-            // 确保控件模板已应用
             if (MainPanel != null) MainPanel.MouseWheel += OnZoomChanged;
             if (Scroll != null)
             {
@@ -38,7 +35,6 @@ namespace WpfCustomControlLibrary1
 
         private void ScaleBarEx_Unloaded(object sender, RoutedEventArgs e)
         {
-            // 取消事件订阅，防止内存泄漏
             if (MainPanel != null) MainPanel.MouseWheel -= OnZoomChanged;
             if (Scroll != null)
             {
@@ -46,7 +42,6 @@ namespace WpfCustomControlLibrary1
                 Scroll.PreviewMouseDown -= OnPreviewMouseDown;
                 Scroll.PreviewMouseUp -= OnPreviewMouseUp;
             }
-            // 也可以在这里取消对 Loaded/Unloaded 事件自身的订阅，但通常不是必须的
             this.Loaded -= ScaleBarEx_Loaded;
             this.Unloaded -= ScaleBarEx_Unloaded;
         }
@@ -59,18 +54,14 @@ namespace WpfCustomControlLibrary1
             Scroll = Template.FindName(NamePartScrollView, this) as ScrollViewer;
             Viewbox = Template.FindName(NamePartViewBox, this) as Viewbox;
             Canvas = Template.FindName(NamePartCanvas, this) as Canvas;
-            ImageMain = Template.FindName(NamePartImage, this) as Image; // 获取Image控件
+            ImageMain = Template.FindName(NamePartImage, this) as Image;
 
-            // 第一次应用模板时，更新图片信息并绘制比例尺
-            // 这会设置Canvas的尺寸并调用 UpdateScaleBarElements
             UpdateImageInfo();
         }
 
         protected override void OnRender(DrawingContext drawingContext)
         {
             base.OnRender(drawingContext);
-            // 这里可以放置与控件自身渲染相关的逻辑，例如绘制边框或调试信息
-            // 但不应再绘制比例尺。
         }
 
         #region Name Parts
@@ -79,7 +70,7 @@ namespace WpfCustomControlLibrary1
         private ScrollViewer? Scroll;
         private Viewbox? Viewbox;
         private Canvas? Canvas;
-        private Image? ImageMain; // 对 Image 控件的引用
+        private Image? ImageMain; 
 
         public const string NamePartMainPanel = "PART_MAIN_PANEL";
         public const string NamePartScrollView = "PART_SCROLL";
@@ -102,19 +93,11 @@ namespace WpfCustomControlLibrary1
             if (d is not ScaleBarEx ex || e.NewValue is not double n || n <= 0) return;
             if (ex.Viewbox is null) return;
 
-            // 设置 Viewbox 的 Width 和 Height，这会控制 Viewbox 内部内容的缩放。
-            // 由于 Canvas 与 Image 在同一个 Grid 中，Canvas 上的比例尺元素会随之缩放。
             ex.Viewbox.Width = ex.DefaultImageSize.Width * ex.ImagePanelScale;
             ex.Viewbox.Height = ex.DefaultImageSize.Height * ex.ImagePanelScale;
 
-            // 理论上，Viewbox的缩放会自动处理Canvas子元素的缩放，
-            // 所以这里不需要再次调用 UpdateScaleBarElements。
         }
 
-        /// <summary>
-        /// 平移灵敏度。默认值为 1.0，表示鼠标移动多少像素，内容就移动多少像素。
-        /// 大于 1.0 会使平移更快，小于 1.0 会使平移更慢。
-        /// </summary>
         public double PanSensitivity
         {
             get { return (double)GetValue(PanSensitivityProperty); }
@@ -133,9 +116,6 @@ namespace WpfCustomControlLibrary1
             set => SetValue(ImagePanelScaleProperty, value);
         }
 
-        /// <summary>
-        /// 将图片缩放至默认平铺大小并滚动到顶部/左侧。
-        /// </summary>
         private void TileImage()
         {
             ImagePanelScale = DefaultImagePanelScale;
@@ -146,9 +126,6 @@ namespace WpfCustomControlLibrary1
             Scroll.ScrollToHorizontalOffset(0);
         }
 
-        /// <summary>
-        /// 更新图片尺寸信息，并设置 Canvas 的尺寸以匹配图片原始尺寸。
-        /// </summary>
         private void UpdateImageInfo()
         {
             // 如果没有图片源或图片尺寸无效，则清空相关信息并移除比例尺
@@ -188,12 +165,9 @@ namespace WpfCustomControlLibrary1
         {
             base.OnRenderSizeChanged(sizeInfo);
 
-            // 当控件自身尺寸改变时，更新图片信息（包括Canvas尺寸）并重新平铺
             UpdateImageInfo();
             TileImage();
         }
-
-        private Point _cursor = new(-1, -1);
 
         private void OnZoomChanged(object sender, MouseWheelEventArgs e)
         {
@@ -229,8 +203,6 @@ namespace WpfCustomControlLibrary1
             // 计算视觉偏移量：目标点与当前鼠标点之间的差值
             var visualOffset = target - pos;
 
-            // *** 关键修改：移除除法 ***
-            // 如果 ScrollViewer 滚动的是已经缩放过的 Viewbox，那么 visualOffset 就是 ScrollViewer 需要滚动的量。
             var offsetXToScroll = visualOffset.X;
             var offsetYToScroll = visualOffset.Y;
 
@@ -241,17 +213,15 @@ namespace WpfCustomControlLibrary1
             e.Handled = true;
         }
 
-        // 声明两个新的私有字段，用于存储鼠标按下时的初始状态
         private Point _startCursorPos = new(-1, -1); // 鼠标按下时在 ImageMain 上的视觉坐标
         private Point _startScrollOffset = new(-1, -1); // 鼠标按下时 ScrollViewer 的滚动偏移量
 
         private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             if (ImageMain == null) return;
-            // 记录鼠标按下时相对于 ImageMain 的坐标（视觉坐标）
-            _startCursorPos = e.GetPosition(ImageMain); // *** 修改：_cursor 改为 _startCursorPos ***
 
-            // *** 新增：记录鼠标按下时 ScrollViewer 的当前滚动位置 ***
+            _startCursorPos = e.GetPosition(ImageMain);
+
             if (Scroll != null)
             {
                 _startScrollOffset = new Point(Scroll.HorizontalOffset, Scroll.VerticalOffset);
@@ -260,7 +230,6 @@ namespace WpfCustomControlLibrary1
 
         private void OnPreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
-            // *** 修改：重置为无效值，表示鼠标未按下或拖动结束 ***
             _startCursorPos = new(-1, -1);
             _startScrollOffset = new(-1, -1);
         }
@@ -268,26 +237,19 @@ namespace WpfCustomControlLibrary1
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
             if (e.LeftButton != MouseButtonState.Pressed) return;
-            if (_startCursorPos.X < 0 || _startCursorPos.Y < 0) return; // 鼠标未按下或初始位置无效
+            if (_startCursorPos.X < 0 || _startCursorPos.Y < 0) return; 
             if (ImageMain == null || ImagePanelScale <= 0) return;
 
-            var currentVisualPos = e.GetPosition(ImageMain); // 鼠标相对于 ImageMain 的当前视觉坐标
+            var currentVisualPos = e.GetPosition(ImageMain);
 
-            // 计算从鼠标按下位置到当前位置的总视觉偏移量
             var totalVisualOffset = currentVisualPos - _startCursorPos;
 
-            // *** 关键修改：移除除法 ***
-            // 如果 ScrollViewer 滚动的是已经缩放过的 Viewbox，那么 totalVisualOffset 就是 ScrollViewer 需要滚动的量。
-            // 应用平移灵敏度到这个视觉偏移量
             var panOffsetX = totalVisualOffset.X * PanSensitivity;
             var panOffsetY = totalVisualOffset.Y * PanSensitivity;
 
-            // 计算 ScrollViewer 应该滚动到的目标绝对位置
-            // 注意：这里是减去 panOffset，因为鼠标向右移动，内容应该向左移动
             var targetHorizontalOffset = _startScrollOffset.X - panOffsetX;
             var targetVerticalOffset = _startScrollOffset.Y - panOffsetY;
 
-            // 调整 ScrollViewer 的滚动位置到目标绝对位置
             Scroll!.ScrollToHorizontalOffset(targetHorizontalOffset);
             Scroll.ScrollToVerticalOffset(targetVerticalOffset);
         }
@@ -574,7 +536,6 @@ namespace WpfCustomControlLibrary1
             double unitX = 0;
             double unitY = 0;
 
-            // **修改位置：根据 IsSetScaleMode 计算 scaleX, scaleY, unitX, unitY**
             if (IsSetScaleMode) // 如果是设置了实际单位的比例尺模式
             {
                 unitX = Math.Max(0.0, WidthinUnit);
@@ -782,7 +743,6 @@ namespace WpfCustomControlLibrary1
                 labelLeft = horizontalRight ? x - textHeight - offset : x + offset;
                 labelTop = (line.Y1 + line.Y2) / 2 + textWidth / 2;
 
-                // **修改位置：设置旋转原点为 (0,0)**
                 label.RenderTransform = new RotateTransform(-90);
                 label.RenderTransformOrigin = new Point(0, 0);
             }
