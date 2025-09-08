@@ -297,7 +297,13 @@ namespace WpfCustomControlLibrary1
             _startCursorPos = e.GetPosition(MainPanel);
             _startPanOffset = new Point(_panTransform.X, _panTransform.Y);
 
-            if (e.LeftButton == MouseButtonState.Pressed)
+            if (e.LeftButton == MouseButtonState.Pressed)//左键实现拖拽
+            {
+                _isDragging = true;
+                MainPanel.CaptureMouse();
+            }
+
+            if (e.MiddleButton == MouseButtonState.Pressed)//滚轮双击实现恢复平铺
             {
                 // 处理双击逻辑
                 if (_waitingForDoubleClick)
@@ -313,10 +319,8 @@ namespace WpfCustomControlLibrary1
                     _waitingForDoubleClick = true;
                     _doubleClickTimer?.Start();
                 }
-
-                _isDragging = true;
-                MainPanel.CaptureMouse();
             }
+
         }
 
         private void OnPreviewMouseUp(object sender, MouseButtonEventArgs e)
