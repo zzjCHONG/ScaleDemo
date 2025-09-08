@@ -72,6 +72,15 @@
                     Content="导出带比例尺图像" />
 
                 <TextBlock Style="{StaticResource HeaderTextStyle}" Text="通用比例尺设置" />
+
+                <CheckBox
+                    Grid.Row="10"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Margin="0,10"
+                    Content="显示比例尺"
+                    IsChecked="{Binding ElementName=myScaleBar, Path=IsScaleBarVisible, Mode=TwoWay}" />
+
                 <Grid Margin="0,5">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />

@@ -258,6 +258,15 @@ namespace WpfCustomControlLibrary1
 
         #region DependencyProperty
 
+        /// <summary>
+        /// 图像输入
+        /// </summary>
+        public ImageSource ImageSource
+        {
+            get => (ImageSource)GetValue(ImageSourceProperty);
+            set => SetValue(ImageSourceProperty, value);
+        }
+
         public static readonly DependencyProperty ImageSourceProperty =
             DependencyProperty.Register("ImageSource", typeof(ImageSource), typeof(ScaleBarEx), new PropertyMetadata(null, (o, p) =>
             {
@@ -282,11 +291,17 @@ namespace WpfCustomControlLibrary1
 
             }));
 
-        public ImageSource ImageSource
+        /// <summary>
+        /// 比例尺是否可见
+        /// </summary>
+        public bool IsScaleBarVisible
         {
-            get => (ImageSource)GetValue(ImageSourceProperty);
-            set => SetValue(ImageSourceProperty, value);
+            get { return (bool)GetValue(IsScaleBarVisibleProperty); }
+            set { SetValue(IsScaleBarVisibleProperty, value); }
         }
+
+        public static readonly DependencyProperty IsScaleBarVisibleProperty =
+            DependencyProperty.Register("IsScaleBarVisible", typeof(bool), typeof(ScaleBarEx), new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.None, OnScaleBarPropertyChanged));
 
         /// <summary>
         /// 比例尺横向长度（像素）
@@ -521,6 +536,9 @@ namespace WpfCustomControlLibrary1
 
             // 清除 Canvas 上所有现有的比例尺元素
             Canvas.Children.Clear();
+
+            // 如果比例尺不可见，直接返回
+            if (!IsScaleBarVisible) return;
 
             // 如果没有图片源或图片尺寸无效，则不绘制比例尺
             if (ImageSource is null || ImageSource.Width == 0 || ImageSource.Height == 0) return;
