@@ -19,13 +19,16 @@
                                 VerticalAlignment="Center"
                                 Stretch="Uniform">
 
+                                <Viewbox.RenderTransform>
+                                    <TransformGroup />
+                                </Viewbox.RenderTransform>
+                                
                                 <Grid>
                                     <Image
                                         x:Name="PART_IMAGEMAIN"
                                         RenderOptions.BitmapScalingMode="NearestNeighbor"
                                         RenderTransformOrigin="0.5,0.5"
                                         Source="{TemplateBinding ImageSource}" />
-
                                     <Canvas
                                         x:Name="PART_CANVAS"
                                         MinWidth="0"

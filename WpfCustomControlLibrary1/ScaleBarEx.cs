@@ -11,6 +11,12 @@ namespace WpfCustomControlLibrary1
 {
     public class ScaleBarEx : ContentControl
     {
+        // 在类的顶部添加新的字段
+        private TranslateTransform _panTransform = new TranslateTransform();
+        private ScaleTransform _scaleTransform = new ScaleTransform();
+        private TransformGroup _transformGroup = new TransformGroup();
+        private bool _isDragging = false;
+
         static ScaleBarEx()
         {
             DefaultStyleKeyProperty.OverrideMetadata(typeof(ScaleBarEx), new FrameworkPropertyMetadata(typeof(ScaleBarEx)));
@@ -20,27 +26,32 @@ namespace WpfCustomControlLibrary1
         {
             this.Loaded += ScaleBarEx_Loaded;
             this.Unloaded += ScaleBarEx_Unloaded;
+
+            // 初始化Transform组
+            _transformGroup.Children.Add(_scaleTransform);
+            _transformGroup.Children.Add(_panTransform);
         }
 
         private void ScaleBarEx_Loaded(object sender, RoutedEventArgs e)
         {
-            if (MainPanel != null) MainPanel.MouseWheel += OnZoomChanged;
-            if (Scroll != null)
+            if (MainPanel != null)
             {
-                Scroll.MouseMove += OnMouseMove;
-                Scroll.PreviewMouseDown += OnPreviewMouseDown;
-                Scroll.PreviewMouseUp += OnPreviewMouseUp;
+                MainPanel.MouseWheel += OnZoomChanged;
+                MainPanel.MouseMove += OnMouseMove;
+                MainPanel.PreviewMouseDown += OnPreviewMouseDown;
+                MainPanel.PreviewMouseUp += OnPreviewMouseUp;
             }
         }
 
         private void ScaleBarEx_Unloaded(object sender, RoutedEventArgs e)
         {
-            if (MainPanel != null) MainPanel.MouseWheel -= OnZoomChanged;
-            if (Scroll != null)
+            if (MainPanel != null)
             {
-                Scroll.MouseMove -= OnMouseMove;
-                Scroll.PreviewMouseDown -= OnPreviewMouseDown;
-                Scroll.PreviewMouseUp -= OnPreviewMouseUp;
+                MainPanel.MouseWheel -= OnZoomChanged;
+                MainPanel.MouseMove -= OnMouseMove;
+                MainPanel.PreviewMouseDown -= OnPreviewMouseDown;
+                MainPanel.PreviewMouseUp -= OnPreviewMouseUp;
+
             }
             this.Loaded -= ScaleBarEx_Loaded;
             this.Unloaded -= ScaleBarEx_Unloaded;
@@ -55,6 +66,12 @@ namespace WpfCustomControlLibrary1
             Viewbox = Template.FindName(NamePartViewBox, this) as Viewbox;
             Canvas = Template.FindName(NamePartCanvas, this) as Canvas;
             ImageMain = Template.FindName(NamePartImage, this) as Image;
+
+            // 为Viewbox设置Transform
+            if (Viewbox != null)
+            {
+                Viewbox.RenderTransform = _transformGroup;
+            }
 
             UpdateImageInfo();
         }
@@ -91,11 +108,18 @@ namespace WpfCustomControlLibrary1
         private static void OnImagePanelScaleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is not ScaleBarEx ex || e.NewValue is not double n || n <= 0) return;
-            if (ex.Viewbox is null) return;
+            if (ex.Viewbox is null || ex.DefaultImagePanelScale <= 0) return;
 
+            // 计算相对于默认缩放的比例
+            var scaleRatio = n / ex.DefaultImagePanelScale;
+
+            // 更新ScaleTransform
+            ex._scaleTransform.ScaleX = scaleRatio;
+            ex._scaleTransform.ScaleY = scaleRatio;
+
+            // 同时更新Viewbox尺寸以保持兼容性（可选）
             ex.Viewbox.Width = ex.DefaultImageSize.Width * ex.ImagePanelScale;
             ex.Viewbox.Height = ex.DefaultImageSize.Height * ex.ImagePanelScale;
-
         }
 
         public double PanSensitivity
@@ -120,10 +144,11 @@ namespace WpfCustomControlLibrary1
         {
             ImagePanelScale = DefaultImagePanelScale;
 
-            if (Scroll is null) return;
-
-            Scroll.ScrollToVerticalOffset(0);
-            Scroll.ScrollToHorizontalOffset(0);
+            // 重置所有变换
+            _panTransform.X = 0;
+            _panTransform.Y = 0;
+            _scaleTransform.ScaleX = 1;
+            _scaleTransform.ScaleY = 1;
         }
 
         private void UpdateImageInfo()
@@ -169,14 +194,16 @@ namespace WpfCustomControlLibrary1
             TileImage();
         }
 
+        // 修改缩放方法，使用Transform而不是ScrollViewer
         private void OnZoomChanged(object sender, MouseWheelEventArgs e)
         {
-            if (ImageMain == null || ImageSource == null || Scroll == null) return;
+            if (ImageMain == null || ImageSource == null || MainPanel == null) return;
 
             var oldScale = ImagePanelScale;
             if (oldScale <= 0) return;
 
-            var pos = e.GetPosition(ImageMain); // 鼠标相对于 ImageMain 的当前视觉坐标
+            // 获取鼠标相对于MainPanel的位置
+            var mousePosition = e.GetPosition(MainPanel);
 
             const double ZoomFactor = 1.2;
             var multiplier = Math.Pow(ZoomFactor, e.Delta / 120.0);
@@ -194,64 +221,73 @@ namespace WpfCustomControlLibrary1
 
             if (Math.Abs(newScale - oldScale) < 0.0001) return;
 
+            // 计算缩放中心
+            var scaleRatio = newScale / oldScale;
+
+            // 获取当前Viewbox的中心点
+            var viewboxCenter = new Point(MainPanel.ActualWidth / 2, MainPanel.ActualHeight / 2);
+
+            // 计算鼠标位置相对于中心的偏移
+            var mouseOffset = new Point(mousePosition.X - viewboxCenter.X, mousePosition.Y - viewboxCenter.Y);
+
+            // 应用缩放
+            _scaleTransform.ScaleX = scaleRatio * _scaleTransform.ScaleX;
+            _scaleTransform.ScaleY = scaleRatio * _scaleTransform.ScaleY;
+
+            // 调整平移以保持鼠标点不动
+            var newMouseOffset = new Point(mouseOffset.X * scaleRatio, mouseOffset.Y * scaleRatio);
+            var panAdjustment = new Point(mouseOffset.X - newMouseOffset.X, mouseOffset.Y - newMouseOffset.Y);
+
+            _panTransform.X += panAdjustment.X;
+            _panTransform.Y += panAdjustment.Y;
+
+            // 更新ImagePanelScale属性以保持一致性
             ImagePanelScale = newScale;
-
-            // 计算鼠标位置在新的缩放下的目标点（视觉坐标）
-            var transformRatio = newScale / oldScale;
-            var target = new Point(pos.X * transformRatio, pos.Y * transformRatio);
-
-            // 计算视觉偏移量：目标点与当前鼠标点之间的差值
-            var visualOffset = target - pos;
-
-            var offsetXToScroll = visualOffset.X;
-            var offsetYToScroll = visualOffset.Y;
-
-            // 调整 ScrollViewer 的滚动位置
-            Scroll.ScrollToHorizontalOffset(Scroll.HorizontalOffset + offsetXToScroll);
-            Scroll.ScrollToVerticalOffset(Scroll.VerticalOffset + offsetYToScroll);
 
             e.Handled = true;
         }
 
-        private Point _startCursorPos = new(-1, -1); // 鼠标按下时在 ImageMain 上的视觉坐标
-        private Point _startScrollOffset = new(-1, -1); // 鼠标按下时 ScrollViewer 的滚动偏移量
+        private Point _startCursorPos = new(-1, -1);
+        private Point _startPanOffset = new(0, 0);
 
         private void OnPreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-            if (ImageMain == null) return;
+            if (MainPanel == null) return;
 
-            _startCursorPos = e.GetPosition(ImageMain);
+            _startCursorPos = e.GetPosition(MainPanel);
+            _startPanOffset = new Point(_panTransform.X, _panTransform.Y);
+            _isDragging = true;
 
-            if (Scroll != null)
-            {
-                _startScrollOffset = new Point(Scroll.HorizontalOffset, Scroll.VerticalOffset);
-            }
+            MainPanel.CaptureMouse();
+            e.Handled = true;
         }
 
         private void OnPreviewMouseUp(object sender, MouseButtonEventArgs e)
         {
+            _isDragging = false;
             _startCursorPos = new(-1, -1);
-            _startScrollOffset = new(-1, -1);
+
+            if (MainPanel != null && MainPanel.IsMouseCaptured)
+            {
+                MainPanel.ReleaseMouseCapture();
+            }
+            e.Handled = true;
         }
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (e.LeftButton != MouseButtonState.Pressed) return;
-            if (_startCursorPos.X < 0 || _startCursorPos.Y < 0) return; 
-            if (ImageMain == null || ImagePanelScale <= 0) return;
+            if (e.LeftButton != MouseButtonState.Pressed || !_isDragging) return;
+            if (_startCursorPos.X < 0 || _startCursorPos.Y < 0) return;
+            if (MainPanel == null || !MainPanel.IsMouseCaptured) return;
 
-            var currentVisualPos = e.GetPosition(ImageMain);
+            var currentPos = e.GetPosition(MainPanel);
+            var totalOffset = currentPos - _startCursorPos;
 
-            var totalVisualOffset = currentVisualPos - _startCursorPos;
+            // 应用平移变换
+            _panTransform.X = _startPanOffset.X + totalOffset.X * PanSensitivity;
+            _panTransform.Y = _startPanOffset.Y + totalOffset.Y * PanSensitivity;
 
-            var panOffsetX = totalVisualOffset.X * PanSensitivity;
-            var panOffsetY = totalVisualOffset.Y * PanSensitivity;
-
-            var targetHorizontalOffset = _startScrollOffset.X - panOffsetX;
-            var targetVerticalOffset = _startScrollOffset.Y - panOffsetY;
-
-            Scroll!.ScrollToHorizontalOffset(targetHorizontalOffset);
-            Scroll.ScrollToVerticalOffset(targetVerticalOffset);
+            e.Handled = true;
         }
 
         #endregion
