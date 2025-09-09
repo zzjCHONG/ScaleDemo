@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -644,242 +645,313 @@ namespace WpfCustomControlLibrary1
         /// </summary>
         private void UpdateScaleBarElements()
         {
-            if (Canvas == null) return;
+            if (ImageSource == null || Canvas == null || !IsScaleBarVisible) return;
 
-            // 清除 Canvas 上所有现有的比例尺元素
             Canvas.Children.Clear();
 
-            // 如果比例尺不可见，直接返回
-            if (!IsScaleBarVisible) return;
+            if (ImageSource?.Width == 0 || ImageSource?.Height == 0) return;
 
-            // 如果没有图片源或图片尺寸无效，则不绘制比例尺
-            if (ImageSource is null || ImageSource.Width == 0 || ImageSource.Height == 0) return;
+            // 获取图片尺寸和比例尺参数
+            var imageSize = new Size(ImageSource!.Width, ImageSource.Height);
+            var scaleInfo = CalculateScaleInfo();
+            var styleInfo = CreateStyleInfo();
+            var layoutInfo = CalculateLayoutInfo(imageSize);
 
-            // 获取图片的原始尺寸。
-            // 由于 Canvas 的尺寸已设置为与图片原始尺寸一致，
-            // 这里的 imageWidth/imageHeight 就是 Canvas 的逻辑尺寸。
-            double imageWidth = ImageSource.Width;
-            double imageHeight = ImageSource.Height;
-
-            // 比例尺的计算参数
-            int scaleX, scaleY;
-            double unitX = 0;
-            double unitY = 0;
-
-            if (IsSetScaleMode) // 如果是设置了实际单位的比例尺模式
-            {
-                unitX = Math.Max(0.0, WidthinUnit);
-                unitY = Math.Max(0.0, HeightinUnit);
-                var scale = Math.Max(0.0, Scale); // pixel/unit (每单位对应的像素数)
-                var pixelAspectRatio = Math.Max(0.0, PixelAspectRatio); // 像素宽高比
-
-                // 计算在图片原始像素坐标系中的长度
-                scaleX = (int)Math.Round(unitX * scale);
-                scaleY = (int)Math.Round(unitY * scale * pixelAspectRatio);
-            }
-            else // 如果是纯像素模式
-            {
-                // 直接使用设置的像素长度
-                scaleX = Math.Max(1, ScaleLengthWidth);
-                scaleY = Math.Max(1, ScaleLengthHeight);
-            }
-
-            int fontSize = Math.Max(1, FontSize);
-            int lineWidth = Math.Max(1, LineWidth);
-
-            // 颜色和字体样式
-            Brush textBrush = TextBrush;
-            Brush bgBrush = BackgroundBrush;
-            FontWeight fontWeight = FontWeight;
-            bool showFont = FontVisibility == Visibility.Visible;
-            string fontFamily = FontFamily;
-
-            // 基础位置 (相对于图片原始尺寸的边距)
-            double margin = 50; // 边距，单位是图片原始像素
-            double x = margin, y = margin; // 默认左上角
-            bool horizontalRight = true, verticalDown = true; // 默认水平向右，垂直向下绘制
-
-            string position = Position;
-            if (position.Length > 2)
-                position = position.Split(':')[1].Trim();
-
-            switch (position)
-            {
-                case "右上":
-                    x = imageWidth - margin;
-                    y = margin;
-                    horizontalRight = false; // 水平向左绘制
-                    verticalDown = true;
-                    break;
-                case "左下":
-                    x = margin;
-                    y = imageHeight - margin;
-                    horizontalRight = true;
-                    verticalDown = false; // 垂直向上绘制
-                    break;
-                case "右下":
-                    x = imageWidth - margin;
-                    y = imageHeight - margin;
-                    horizontalRight = false; // 水平向左绘制
-                    verticalDown = false; // 垂直向上绘制
-                    break;
-                case "左上":
-                default:
-                    // 默认值已设置
-                    break;
-            }
-
-            string texttoFormatX = IsSetScaleMode ? $"{unitX} {Unit}" : $"{scaleX} Pixel";
-            string texttoFormatY = IsSetScaleMode ? $"{unitY} {Unit}" : $"{scaleY} Pixel";
-
-            // 计算文本尺寸 (使用 FormattedText 来预估尺寸，以便计算背景框大小)
-            // FormattedText 提供了精确的文本测量，即使文本尚未渲染到 UI。
-            // 注意：FormattedText 的 DPI 参数应从 VisualTreeHelper.GetDpi(this) 获取
-            double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-
-            FormattedText hText = new(texttoFormatX, CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize,
-                textBrush, dpi);
-
-            FormattedText vText = new(texttoFormatY, CultureInfo.CurrentCulture,
-                FlowDirection.LeftToRight, new Typeface(fontFamily), fontSize,
-                textBrush, dpi);
-
-            double hTextWidth = hText.Width, hTextHeight = hText.Height;
-            double vTextWidth = vText.Width, vTextHeight = vText.Height; // vTextWidth 是竖直文本旋转前的宽度
-
-            string drawMode = DrawMode;
-            if (drawMode.Length > 2)
-                drawMode = drawMode.Split(':')[1].Trim();
-
+            // 根据绘制模式绘制比例尺
+            string drawMode = GetDrawModeValue();
             if (drawMode is "共存" || drawMode is "水平")
-                DrawScaleElement(true, scaleX, x, y, horizontalRight, verticalDown,
-                    textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, hTextWidth, hTextHeight, texttoFormatX, texttoFormatY);
+                DrawScaleElement(scaleInfo.Horizontal, styleInfo, layoutInfo, true);
 
             if (drawMode is "共存" || drawMode is "竖直")
-                DrawScaleElement(false, scaleY, x, y, horizontalRight, verticalDown,
-                    textBrush, bgBrush, fontWeight, showFont, fontFamily, fontSize, lineWidth, vTextWidth, vTextHeight, texttoFormatX, texttoFormatY);
+                DrawScaleElement(scaleInfo.Vertical, styleInfo, layoutInfo, false);
         }
 
         /// <summary>
-        /// 创建并添加比例尺的 UI 元素 (背景矩形、线条、文本标签) 到 Canvas。
-        /// 所有坐标和长度都基于 Canvas 的逻辑像素 (即图片原始像素)。
+        /// 计算比例尺的长度信息
         /// </summary>
-        /// <param name="horizontal">是否绘制水平比例尺</param>
-        /// <param name="length">比例尺的长度（像素）</param>
-        /// <param name="x">起始X坐标（图片原始像素坐标）</param>
-        /// <param name="y">起始Y坐标（图片原始像素坐标）</param>
-        /// <param name="horizontalRight">水平线是否向右绘制</param>
-        /// <param name="verticalDown">垂直线是否向下绘制</param>
-        /// <param name="textBrush">文本颜色</param>
-        /// <param name="bgBrush">背景颜色</param>
-        /// <param name="fontWeight">字体粗细</param>
-        /// <param name="showFont">是否显示文本</param>
-        /// <param name="fontFamily">字体家族</param>
-        /// <param name="fontSize">字体大小</param>
-        /// <param name="lineWidth">线条宽度</param>
-        /// <param name="textWidth">文本的原始宽度 (FormattedText.Width)</param>
-        /// <param name="textHeight">文本的原始高度 (FormattedText.Height)</param>
-        /// <param name="texttoFormatX">水平比例尺的文本内容</param>
-        /// <param name="texttoFormatY">垂直比例尺的文本内容</param>
-        private void DrawScaleElement(
-            bool horizontal, int length, double x, double y, bool horizontalRight, bool verticalDown,
-            Brush textBrush, Brush bgBrush, FontWeight fontWeight, bool showFont,
-            string fontFamily, int fontSize, int lineWidth, double textWidth, double textHeight, string texttoFormatX, string texttoFormatY)
+        private (ScaleData Horizontal, ScaleData Vertical) CalculateScaleInfo()
         {
-            //todo，若字体加粗且字体字号过大，可能会出现背景无法覆盖完整的情况
-            double bgPadding = 5;
-            double halfLine = lineWidth / 2.0;
+            int scaleX, scaleY;
+            string textX, textY;
 
-            // 调整垂直线起始位置的偏移量
+            if (IsSetScaleMode)
+            {
+                double unitX = Math.Max(0.0, WidthinUnit);
+                double unitY = Math.Max(0.0, HeightinUnit);
+                double scale = Math.Max(0.0, Scale);
+                double pixelAspectRatio = Math.Max(0.0, PixelAspectRatio);
+
+                scaleX = (int)Math.Round(unitX * scale);
+                scaleY = (int)Math.Round(unitY * scale * pixelAspectRatio);
+                textX = $"{unitX} {Unit}";
+                textY = $"{unitY} {Unit}";
+            }
+            else
+            {
+                scaleX = Math.Max(1, ScaleLengthWidth);
+                scaleY = Math.Max(1, ScaleLengthHeight);
+                textX = $"{scaleX} Pixel";
+                textY = $"{scaleY} Pixel";
+            }
+
+            double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+            var typeface = new Typeface(FontFamily);
+
+            return (
+                new ScaleData(scaleX, textX, CreateFormattedText(textX, typeface, dpi)),
+                new ScaleData(scaleY, textY, CreateFormattedText(textY, typeface, dpi))
+            );
+        }
+
+        /// <summary>
+        /// 创建样式信息
+        /// </summary>
+        private StyleInfo CreateStyleInfo()
+        {
+            return new StyleInfo
+            {
+                TextBrush = TextBrush,
+                BackgroundBrush = BackgroundBrush,
+                FontWeight = FontWeight,
+                FontFamily = FontFamily,
+                FontSize = Math.Max(1, FontSize),
+                LineWidth = Math.Max(1, LineWidth),
+                ShowFont = FontVisibility == Visibility.Visible
+            };
+        }
+
+        /// <summary>
+        /// 计算布局信息
+        /// </summary>
+        private LayoutInfo CalculateLayoutInfo(Size imageSize)
+        {
+            double basemargin = 65;
+            string drawMode = GetDrawModeValue();
+
+            double margin = basemargin;
+            if (drawMode is "共存")
+            {
+                margin = basemargin + FontSize;
+            }
+
+            Debug.WriteLine(margin);
+
+            string position = GetPositionValue();
+            return position switch
+            {
+                "右上" => new LayoutInfo(imageSize.Width - margin, margin, false, true),
+                "左下" => new LayoutInfo(margin, imageSize.Height - margin, true, false),
+                "右下" => new LayoutInfo(imageSize.Width - margin, imageSize.Height - margin, false, false),
+                _ => new LayoutInfo(margin, margin, true, true) // 默认左上
+            };
+        }
+
+        /// <summary>
+        /// 创建格式化文本
+        /// </summary>
+        private FormattedText CreateFormattedText(string text, Typeface typeface, double dpi)
+        {
+            return new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
+                typeface, Math.Max(1, FontSize), TextBrush, dpi);
+        }
+
+        /// <summary>
+        /// 绘制比例尺元素
+        /// </summary>
+        private void DrawScaleElement(ScaleData scaleData, StyleInfo style, LayoutInfo layout, bool horizontal)
+        {
+            const double bgPadding = 5;
+
             double offset = 0;
+            if (GetDrawModeValue() is "共存") offset = style.FontSize * 1.2;
 
-            // 背景矩形尺寸与位置
-            double bgWidth, bgHeight, bgLeft, bgTop;
-
-            if (horizontal)
-            {
-                double maxLen = Math.Max(showFont ? textWidth : 0, length);
-                bgWidth = maxLen + 2 * bgPadding;
-                bgHeight = lineWidth + (showFont ? textHeight : 0) + 2 * bgPadding;
-
-                bgLeft = horizontalRight
-                    ? x - bgPadding - (showFont && textWidth > length ? (textWidth - length) / 2 : 0)
-                    : x - length - bgPadding - (showFont && textWidth > length ? (textWidth - length) / 2 : 0);
-
-                bgTop = verticalDown
-                    ? y - (showFont ? textHeight : 0) - bgPadding
-                    : y - lineWidth - bgPadding;
-            }
-            else // Vertical
-            {
-                double maxLen = Math.Max(showFont ? textWidth : 0, length);
-                bgWidth = lineWidth + (showFont ? textHeight : 0) + 2 * bgPadding;
-                bgHeight = maxLen + 2 * bgPadding;
-
-                if (this.DrawMode is "共存")
-                    offset = 15;
-
-                bgLeft = horizontalRight
-                    ? x - (showFont ? textHeight : 0) - bgPadding - offset
-                    : x - lineWidth - bgPadding + offset;
-
-                bgTop = verticalDown
-                    ? y - bgPadding - (showFont && textWidth > length ? (textWidth - length) / 2 : 0) + offset
-                    : y - length - bgPadding - (showFont && textWidth > length ? (textWidth - length) / 2 : 0) - offset;
-            }
+            // 计算背景区域
+            var bgRect = CalculateBackgroundRect(scaleData, style, layout, horizontal, bgPadding, offset);
 
             // 创建并添加背景矩形
-            var rect = new Rectangle { Width = bgWidth, Height = bgHeight, Fill = bgBrush };
-            Canvas.SetLeft(rect, bgLeft);
-            Canvas.SetTop(rect, bgTop);
-            Canvas?.Children.Add(rect);
+            AddBackgroundRectangle(bgRect, style.BackgroundBrush!);
 
             // 创建并添加线条
-            var line = new Line { Stroke = textBrush, StrokeThickness = lineWidth };
-            Canvas?.Children.Add(line);
+            var lineCoords = CalculateLineCoordinates(scaleData.Length, layout, horizontal, style.LineWidth, offset);
+            AddLine(lineCoords, style.TextBrush!, style.LineWidth);
 
             // 创建并添加文本标签
-            var label = new TextBlock
+            if (style.ShowFont)
             {
-                Text = horizontal ? texttoFormatX : texttoFormatY,
-                FontSize = fontSize,
-                Foreground = textBrush,
-                FontWeight = fontWeight,
-                FontFamily = new FontFamily(fontFamily),
-                Visibility = showFont ? Visibility.Visible : Visibility.Collapsed
-            };
-            Canvas?.Children.Add(label);
+                var labelPos = CalculateLabelPosition(scaleData, lineCoords, layout, horizontal, offset);
+                AddTextLabel(scaleData.Text, labelPos, style, horizontal);
+            }
+        }
 
-            // 坐标
-            double labelLeft, labelTop;
+        /// <summary>
+        /// 计算背景矩形区域
+        /// </summary>
+        private Rect CalculateBackgroundRect(ScaleData scaleData, StyleInfo style, LayoutInfo layout,
+            bool horizontal, double padding, double offset)
+        {
+            double textWidth = scaleData.FormattedText.Width;
+            double textHeight = scaleData.FormattedText.Height;
 
             if (horizontal)
             {
-                line.X1 = horizontalRight ? x : x - length;
-                line.X2 = horizontalRight ? x + length : x;
-                line.Y1 = line.Y2 = verticalDown ? y + halfLine : y - halfLine;
+                double maxWidth = Math.Max(style.ShowFont ? textWidth : 0, scaleData.Length);
+                double width = maxWidth + 2 * padding;
+                double height = style.LineWidth + (style.ShowFont ? textHeight : 0) + 2 * padding;
 
-                labelLeft = (line.X1 + line.X2) / 2 - textWidth / 2;
-                labelTop = verticalDown ? y - textHeight : y;
+                double left = layout.HorizontalRight
+                    ? layout.X - padding - (style.ShowFont && textWidth > scaleData.Length ? (textWidth - scaleData.Length) / 2 : 0)
+                    : layout.X - scaleData.Length - padding - (style.ShowFont && textWidth > scaleData.Length ? (textWidth - scaleData.Length) / 2 : 0);
+
+                double top = layout.VerticalDown
+                    ? layout.Y - (style.ShowFont ? textHeight : 0) - padding
+                    : layout.Y - style.LineWidth - padding;
+
+                return new Rect(left, top, width, height);
             }
-            else // Vertical
+            else
             {
-                line.Y1 = verticalDown ? y + offset : y - length - offset;
-                line.Y2 = verticalDown ? y + offset + length : y - offset;
+                double maxHeight = Math.Max(style.ShowFont ? textWidth : 0, scaleData.Length);
+                double width = style.LineWidth + (style.ShowFont ? textHeight : 0) + 2 * padding;
+                double height = maxHeight + 2 * padding;
 
-                line.X1 = line.X2 = horizontalRight ? x + halfLine - offset : x - halfLine + offset;
+                double left = layout.HorizontalRight
+                    ? layout.X - (style.ShowFont ? textHeight : 0) - padding - offset
+                    : layout.X - style.LineWidth - padding + offset;
 
-                labelLeft = horizontalRight ? x - textHeight - offset : x + offset;
-                labelTop = (line.Y1 + line.Y2) / 2 + textWidth / 2;
+                double top = layout.VerticalDown
+                    ? layout.Y - padding - (style.ShowFont && textWidth > scaleData.Length ? (textWidth - scaleData.Length) / 2 : 0) + offset
+                    : layout.Y - scaleData.Length - padding - (style.ShowFont && textWidth > scaleData.Length ? (textWidth - scaleData.Length) / 2 : 0) - offset;
 
+                return new Rect(left, top, width, height);
+            }
+        }
+
+        /// <summary>
+        /// 计算线条坐标
+        /// </summary>
+        private LineCoordinates CalculateLineCoordinates(int length, LayoutInfo layout, bool horizontal, int lineWidth, double offset)
+        {
+            double halfLine = lineWidth / 2.0;
+
+            if (horizontal)
+            {
+                double x1 = layout.HorizontalRight ? layout.X : layout.X - length;
+                double x2 = layout.HorizontalRight ? layout.X + length : layout.X;
+                double y = layout.VerticalDown ? layout.Y + halfLine : layout.Y - halfLine;
+                return new LineCoordinates(x1, y, x2, y);
+            }
+            else
+            {
+                double y1 = layout.VerticalDown ? layout.Y + offset : layout.Y - length - offset;
+                double y2 = layout.VerticalDown ? layout.Y + offset + length : layout.Y - offset;
+                double x = layout.HorizontalRight ? layout.X + halfLine - offset : layout.X - halfLine + offset;
+                return new LineCoordinates(x, y1, x, y2);
+            }
+        }
+
+        /// <summary>
+        /// 计算文本标签位置
+        /// </summary>
+        private Point CalculateLabelPosition(ScaleData scaleData, LineCoordinates lineCoords, LayoutInfo layout, bool horizontal, double offset)
+        {
+            double textWidth = scaleData.FormattedText.Width;
+            double textHeight = scaleData.FormattedText.Height;
+
+            if (horizontal)
+            {
+                double left = (lineCoords.X1 + lineCoords.X2) / 2 - textWidth / 2;
+                double top = layout.VerticalDown ? layout.Y - textHeight : layout.Y;
+                return new Point(left, top);
+            }
+            else
+            {
+                double left = layout.HorizontalRight ? layout.X - textHeight - offset : layout.X + offset;
+                double top = (lineCoords.Y1 + lineCoords.Y2) / 2 + textWidth / 2;
+                return new Point(left, top);
+            }
+        }
+
+        /// <summary>
+        /// 添加背景矩形到Canvas
+        /// </summary>
+        private void AddBackgroundRectangle(Rect rect, Brush brush)
+        {
+            var rectangle = new Rectangle { Width = rect.Width, Height = rect.Height, Fill = brush };
+            Canvas.SetLeft(rectangle, rect.Left);
+            Canvas.SetTop(rectangle, rect.Top);
+            Canvas?.Children.Add(rectangle);
+        }
+
+        /// <summary>
+        /// 添加线条到Canvas
+        /// </summary>
+        private void AddLine(LineCoordinates coords, Brush brush, int thickness)
+        {
+            var line = new Line
+            {
+                X1 = coords.X1,
+                Y1 = coords.Y1,
+                X2 = coords.X2,
+                Y2 = coords.Y2,
+                Stroke = brush,
+                StrokeThickness = thickness
+            };
+            Canvas?.Children.Add(line);
+        }
+
+        /// <summary>
+        /// 添加文本标签到Canvas
+        /// </summary>
+        private void AddTextLabel(string text, Point position, StyleInfo style, bool horizontal)
+        {
+            var label = new TextBlock
+            {
+                Text = text,
+                FontSize = style.FontSize,
+                Foreground = style.TextBrush,
+                FontWeight = style.FontWeight,
+                FontFamily = new FontFamily(style.FontFamily)
+            };
+
+            if (!horizontal)
+            {
                 label.RenderTransform = new RotateTransform(-90);
                 label.RenderTransformOrigin = new Point(0, 0);
             }
 
-            Canvas.SetLeft(label, labelLeft);
-            Canvas.SetTop(label, labelTop);
+            Canvas.SetLeft(label, position.X);
+            Canvas.SetTop(label, position.Y);
+            Canvas?.Children.Add(label);
         }
+
+        /// <summary>
+        /// 获取绘制模式的值部分
+        /// </summary>
+        private string GetDrawModeValue() 
+            => DrawMode.Length > 2 ? DrawMode.Split(':')[1].Trim() : DrawMode;
+
+        /// <summary>
+        /// 获取位置的值部分
+        /// </summary>
+        private string GetPositionValue() => Position.Length > 2 ? Position.Split(':')[1].Trim() : Position;
+
+        // 辅助数据结构
+        private record ScaleData(int Length, string Text, FormattedText FormattedText);
+
+        private record StyleInfo
+        {
+            public Brush? TextBrush { get; init; }
+            public Brush? BackgroundBrush { get; init; }
+            public FontWeight FontWeight { get; init; }
+            public string? FontFamily { get; init; }
+            public int FontSize { get; init; }
+            public int LineWidth { get; init; }
+            public bool ShowFont { get; init; }
+        }
+
+        private record LayoutInfo(double X, double Y, bool HorizontalRight, bool VerticalDown);
+
+        private record LineCoordinates(double X1, double Y1, double X2, double Y2);
 
         #endregion
     }
