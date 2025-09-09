@@ -725,16 +725,7 @@ namespace WpfCustomControlLibrary1
         /// </summary>
         private LayoutInfo CalculateLayoutInfo(Size imageSize)
         {
-            double basemargin = 65;
-            string drawMode = GetDrawModeValue();
-
-            double margin = basemargin;
-            if (drawMode is "共存")
-            {
-                margin = basemargin + FontSize;
-            }
-
-            Debug.WriteLine(margin);
+           const double margin = 50;
 
             string position = GetPositionValue();
             return position switch
