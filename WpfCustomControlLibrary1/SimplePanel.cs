@@ -3,7 +3,7 @@ using System.Windows.Controls;
 
 namespace WpfCustomControlLibrary1
 {
-    public class SimplePanel:Panel
+    class SimplePanel : Panel
     {
         protected override Size MeasureOverride(Size constraint)
         {

@@ -92,63 +92,6 @@ namespace WpfCustomControlLibrary1
             base.OnRender(drawingContext);
         }
 
-        public enum ImageFormat
-        {
-            Png,
-            Jpeg,
-            Bmp,
-            Tiff,
-            Gif
-        }
-
-        public BitmapImage? CaptureGridContent(ImageFormat format = ImageFormat.Png)
-        {
-            // 直接获取命名的Grid元素
-            if (GetTemplateChild(NamePartGrid) is not Grid targetGrid)
-                return null;
-
-            BitmapImage bitmapImage = new();
-            int width = (int)targetGrid.ActualWidth;
-            int height = (int)targetGrid.ActualHeight;
-
-            if (width < 10 || height < 10) return null;
-
-            RenderTargetBitmap rtb = new(width, height, 96, 96, PixelFormats.Pbgra32);
-            DrawingVisual dv = new();
-
-            using (DrawingContext dc = dv.RenderOpen())
-            {
-                VisualBrush vb = new(targetGrid) { Stretch = Stretch.None };
-                dc.DrawRectangle(vb, null, new Rect(new Point(), new Size(width, height)));
-            }
-
-            rtb.Render(dv);
-
-            // 根据枚举选择编码器
-            BitmapEncoder encoder = format switch
-            {
-                ImageFormat.Jpeg => new JpegBitmapEncoder(),
-                ImageFormat.Bmp => new BmpBitmapEncoder(),
-                ImageFormat.Tiff => new TiffBitmapEncoder(),
-                ImageFormat.Gif => new GifBitmapEncoder(),
-                ImageFormat.Png or _ => new PngBitmapEncoder() // 默认PNG
-            };
-
-            encoder.Frames.Add(BitmapFrame.Create(rtb));
-
-            using (MemoryStream memoryStream = new())
-            {
-                encoder.Save(memoryStream);
-                memoryStream.Position = 0;
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = memoryStream;
-                bitmapImage.EndInit();
-            }
-
-            return bitmapImage;
-        }
-
         #region Name Parts
 
         private Panel? MainPanel;
@@ -999,6 +942,64 @@ namespace WpfCustomControlLibrary1
         private record LayoutInfo(double X, double Y, bool HorizontalRight, bool VerticalDown);
 
         private record LineCoordinates(double X1, double Y1, double X2, double Y2);
+
+        public enum ImageFormat
+        {
+            Png,
+            Jpeg,
+            Bmp,
+            Tiff,
+            Gif
+        }
+
+        public BitmapImage? CaptureGridContent(ImageFormat format = ImageFormat.Png)
+        {
+            // 直接获取命名的Grid元素
+            if (GetTemplateChild(NamePartGrid) is not Grid targetGrid)
+                return null;
+
+            BitmapImage bitmapImage = new();
+            int width = (int)targetGrid.ActualWidth;
+            int height = (int)targetGrid.ActualHeight;
+
+            if (width < 10 || height < 10) return null;
+
+            RenderTargetBitmap rtb = new(width, height, 96, 96, PixelFormats.Pbgra32);
+            DrawingVisual dv = new();
+
+            using (DrawingContext dc = dv.RenderOpen())
+            {
+                VisualBrush vb = new(targetGrid) { Stretch = Stretch.None };
+                dc.DrawRectangle(vb, null, new Rect(new Point(), new Size(width, height)));
+            }
+
+            rtb.Render(dv);
+
+            // 根据枚举选择编码器
+            BitmapEncoder encoder = format switch
+            {
+                ImageFormat.Jpeg => new JpegBitmapEncoder(),
+                ImageFormat.Bmp => new BmpBitmapEncoder(),
+                ImageFormat.Tiff => new TiffBitmapEncoder(),
+                ImageFormat.Gif => new GifBitmapEncoder(),
+                ImageFormat.Png or _ => new PngBitmapEncoder() // 默认PNG
+            };
+
+            encoder.Frames.Add(BitmapFrame.Create(rtb));
+
+            using (MemoryStream memoryStream = new())
+            {
+                encoder.Save(memoryStream);
+                memoryStream.Position = 0;
+                bitmapImage.BeginInit();
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.StreamSource = memoryStream;
+                bitmapImage.EndInit();
+            }
+
+            return bitmapImage;
+        }
+
 
         #endregion
     }
