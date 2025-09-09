@@ -231,7 +231,6 @@ namespace WpfCustomControlLibrary1
             TileImage();
         }
 
-        // 修改缩放方法，使用Transform而不是ScrollViewer
         private void OnZoomChanged(object sender, MouseWheelEventArgs e)
         {
             if (ImageMain == null || ImageSource == null || MainPanel == null) return;
@@ -255,29 +254,31 @@ namespace WpfCustomControlLibrary1
 
             if (Math.Abs(newScale - oldScale) < 0.0001) return;
 
-            // 计算缩放中心
-            var scaleRatio = newScale / oldScale;
-
-            // 获取当前Viewbox的中心点
-            var viewboxCenter = new Point(MainPanel.ActualWidth / 2, MainPanel.ActualHeight / 2);
-
-            // 计算鼠标位置相对于中心的偏移
-            var mouseOffset = new Point(mousePosition.X - viewboxCenter.X, mousePosition.Y - viewboxCenter.Y);
-
-            // 应用缩放到ScaleTransform
+            // 获取缩放前鼠标在图像坐标系中的位置
+            // 需要考虑当前的变换状态
             var currentScaleRatio = _scaleTransform.ScaleX;
-            var newScaleRatio = (newScale / DefaultImagePanelScale);
-            var transformScaleRatio = newScaleRatio / currentScaleRatio;
+            var currentPanX = _panTransform.X;
+            var currentPanY = _panTransform.Y;
 
+            // 将鼠标位置转换到图像坐标系（未变换的原始坐标）
+            var imagePointX = (mousePosition.X - currentPanX) / currentScaleRatio;
+            var imagePointY = (mousePosition.Y - currentPanY) / currentScaleRatio;
+
+            // 计算新的缩放比例
+            var newScaleRatio = newScale / DefaultImagePanelScale;
+            var scaleRatio = newScaleRatio / currentScaleRatio;
+
+            // 应用新的缩放
             _scaleTransform.ScaleX = newScaleRatio;
             _scaleTransform.ScaleY = newScaleRatio;
 
-            // 调整平移以保持鼠标点不动
-            var newMouseOffset = new Point(mouseOffset.X * transformScaleRatio, mouseOffset.Y * transformScaleRatio);
-            var panAdjustment = new Point(mouseOffset.X - newMouseOffset.X, mouseOffset.Y - newMouseOffset.Y);
+            // 计算缩放后鼠标应该在的位置
+            var newMousePointX = imagePointX * newScaleRatio;
+            var newMousePointY = imagePointY * newScaleRatio;
 
-            _panTransform.X += panAdjustment.X;
-            _panTransform.Y += panAdjustment.Y;
+            // 调整平移，使鼠标位置保持不变
+            _panTransform.X = mousePosition.X - newMousePointX;
+            _panTransform.Y = mousePosition.Y - newMousePointY;
 
             // 更新ImagePanelScale属性以保持一致性
             _isUpdatingFromTransform = true;
