@@ -12,11 +12,7 @@
     mc:Ignorable="d">
 
     <Grid>
-
-        <lib:SimplePanel>
-            <lib:ScaleBarEx x:Name="scalebar" />
-        </lib:SimplePanel>
-
+        <lib:ScaleBarEx x:Name="scalebar" />
     </Grid>
 
 </Window>
