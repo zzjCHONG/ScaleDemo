@@ -18,12 +18,10 @@
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Stretch="Uniform">
-
                                 <Viewbox.RenderTransform>
                                     <TransformGroup />
                                 </Viewbox.RenderTransform>
-
-                                <Grid>
+                                <Grid x:Name="PART_GRID">
                                     <Image
                                         x:Name="PART_IMAGEMAIN"
                                         RenderOptions.BitmapScalingMode="NearestNeighbor"

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -74,7 +74,6 @@ namespace WpfCustomControlLibrary1
             base.OnApplyTemplate();
 
             MainPanel = Template.FindName(NamePartMainPanel, this) as Panel;
-            Scroll = Template.FindName(NamePartScrollView, this) as ScrollViewer;
             Viewbox = Template.FindName(NamePartViewBox, this) as Viewbox;
             Canvas = Template.FindName(NamePartCanvas, this) as Canvas;
             ImageMain = Template.FindName(NamePartImage, this) as Image;
@@ -93,19 +92,76 @@ namespace WpfCustomControlLibrary1
             base.OnRender(drawingContext);
         }
 
+        public enum ImageFormat
+        {
+            Png,
+            Jpeg,
+            Bmp,
+            Tiff,
+            Gif
+        }
+
+        public BitmapImage? CaptureGridContent(ImageFormat format = ImageFormat.Png)
+        {
+            // 直接获取命名的Grid元素
+            if (GetTemplateChild(NamePartGrid) is not Grid targetGrid)
+                return null;
+
+            BitmapImage bitmapImage = new();
+            int width = (int)targetGrid.ActualWidth;
+            int height = (int)targetGrid.ActualHeight;
+
+            if (width < 10 || height < 10) return null;
+
+            RenderTargetBitmap rtb = new(width, height, 96, 96, PixelFormats.Pbgra32);
+            DrawingVisual dv = new();
+
+            using (DrawingContext dc = dv.RenderOpen())
+            {
+                VisualBrush vb = new(targetGrid) { Stretch = Stretch.None };
+                dc.DrawRectangle(vb, null, new Rect(new Point(), new Size(width, height)));
+            }
+
+            rtb.Render(dv);
+
+            // 根据枚举选择编码器
+            BitmapEncoder encoder = format switch
+            {
+                ImageFormat.Jpeg => new JpegBitmapEncoder(),
+                ImageFormat.Bmp => new BmpBitmapEncoder(),
+                ImageFormat.Tiff => new TiffBitmapEncoder(),
+                ImageFormat.Gif => new GifBitmapEncoder(),
+                ImageFormat.Png or _ => new PngBitmapEncoder() // 默认PNG
+            };
+
+            encoder.Frames.Add(BitmapFrame.Create(rtb));
+
+            using (MemoryStream memoryStream = new())
+            {
+                encoder.Save(memoryStream);
+                memoryStream.Position = 0;
+                bitmapImage.BeginInit();
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.StreamSource = memoryStream;
+                bitmapImage.EndInit();
+            }
+
+            return bitmapImage;
+        }
+
         #region Name Parts
 
         private Panel? MainPanel;
-        private ScrollViewer? Scroll;
         private Viewbox? Viewbox;
         private Canvas? Canvas;
         private Image? ImageMain;
 
-        public const string NamePartMainPanel = "PART_MAIN_PANEL";
         public const string NamePartScrollView = "PART_SCROLL";
+        public const string NamePartMainPanel = "PART_MAIN_PANEL";
         public const string NamePartViewBox = "PART_VIEWBOX";
-        public const string NamePartCanvas = "PART_CANVAS";
+        public const string NamePartGrid = "PART_GRID";
         public const string NamePartImage = "PART_IMAGEMAIN";
+        public const string NamePartCanvas = "PART_CANVAS";
 
         #endregion
 
