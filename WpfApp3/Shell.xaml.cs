@@ -75,5 +75,10 @@ namespace WpfApp3
                 MainImage.Stretch = Stretch.None;
             }
         }
+
+        private void ScaleChanged(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
