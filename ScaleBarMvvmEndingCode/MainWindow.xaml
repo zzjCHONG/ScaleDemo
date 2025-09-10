@@ -32,7 +32,7 @@
                 Margin="5"
                 ImageSource="{Binding DataContext.CurrentImage, RelativeSource={RelativeSource AncestorType=Window}}" />
 
-            <!--  设置面板  -->         
+            <!--  设置面板  -->
             <controls:ScaleBarSettingsControl
                 Grid.Column="1"
                 Margin="5"
