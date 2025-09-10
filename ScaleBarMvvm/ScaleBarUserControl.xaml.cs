@@ -13,15 +13,17 @@ namespace ScaleBarMvvm
         {
             InitializeComponent();
 
-            // 创建并设置ViewModel
+            // 创建ViewModel实例
             ViewModel = new ScaleBarExViewModel();
-            DataContext = ViewModel;
+
+            // 设置DataContext
+            this.DataContext = ViewModel;
         }
 
         // 公开ViewModel供外部访问
-        public ScaleBarExViewModel ViewModel { get; }
+        public ScaleBarExViewModel ViewModel { get; private set; }
 
-        // 依赖属性：ImageSource - 外部可以直接设置
+        // 依赖属性：ImageSource
         public ImageSource ImageSource
         {
             get => (ImageSource)GetValue(ImageSourceProperty);
@@ -33,14 +35,17 @@ namespace ScaleBarMvvm
                 nameof(ImageSource),
                 typeof(ImageSource),
                 typeof(ScaleBarUserControl),
-                new PropertyMetadata(null, OnImageSourceChanged));
+                new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, OnImageSourceChanged));
 
         private static void OnImageSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is ScaleBarUserControl control)
+            if (d is ScaleBarUserControl control && control.ViewModel != null)
             {
-                // 将外部设置的ImageSource同步到ViewModel
+                // 同步ImageSource到ViewModel
                 control.ViewModel.ImageSource = e.NewValue as ImageSource;
+
+                // 调试输出
+                System.Diagnostics.Debug.WriteLine($"ScaleBarUserControl: ImageSource changed to {e.NewValue}");
             }
         }
     }
