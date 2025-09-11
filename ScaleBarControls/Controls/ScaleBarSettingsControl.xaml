@@ -1,0 +1,240 @@
+﻿<UserControl
+    x:Class="ScaleBarControls.Controls.ScaleBarSettingsControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:ScaleBarControls.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:ScaleBarControls.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="1000"
+    d:DesignWidth="400"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <converters:FontWeightConverter x:Key="FontWeightConverter"/>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="10" Orientation="Vertical">
+
+            <!-- 标题 -->
+            <TextBlock Text="比例尺设置" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" HorizontalAlignment="Center"/>
+
+            <!-- 图像加载区域 -->
+            <GroupBox Header="图像控制" Margin="0,0,0,10">
+                <StackPanel>
+                    <Button Content="加载图片" Click="LoadImageButton_Click" Height="30" Margin="5"/>
+                    <TextBlock Text="{Binding ViewModel.IsImageLoaded, StringFormat='图片已加载: {0}'}" Margin="5,5,5,0"/>
+                    <TextBlock Text="{Binding ViewModel.ImagePanelScale, StringFormat='当前缩放: {0:F2}'}" Margin="5,0,5,5"/>
+                    <Button Content="重置视图" Command="{Binding ViewModel.ResetScaleSettingsCommand}" Height="25" Margin="5,0,5,5"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- 预设配置 -->
+            <GroupBox Header="预设配置" Margin="0,0,0,10">
+                <ItemsControl ItemsSource="{Binding PresetConfigs}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding Name}" Tag="{Binding Key}" 
+                                   Click="ApplyPresetButton_Click" Margin="2" Height="25"
+                                   ToolTip="{Binding Description}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </GroupBox>
+
+            <!-- 缩放和平移设置 -->
+            <GroupBox Header="缩放和平移设置" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="60"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="最小缩放:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <Slider Grid.Row="0" Grid.Column="1" Minimum="0.1" Maximum="2.0" Value="{Binding ViewModel.MinScale}" 
+                           TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="5"/>
+                    <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding ViewModel.MinScale, StringFormat=F1}" Margin="5"/>
+
+                    <TextBlock Text="最大缩放:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <Slider Grid.Row="1" Grid.Column="1" Minimum="5" Maximum="50" Value="{Binding ViewModel.MaxScale}" 
+                           TickFrequency="1" IsSnapToTickEnabled="True" Margin="5"/>
+                    <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding ViewModel.MaxScale, StringFormat=F0}" Margin="5"/>
+
+                    <TextBlock Text="平移敏感度:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <Slider Grid.Row="2" Grid.Column="1" Minimum="0.5" Maximum="3.0" Value="{Binding ViewModel.PanSensitivity}" 
+                           TickFrequency="0.1" IsSnapToTickEnabled="True" Margin="5"/>
+                    <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding ViewModel.PanSensitivity, StringFormat=F1}" Margin="5"/>
+                </Grid>
+            </GroupBox>
+
+            <!-- 比例尺显示设置 -->
+            <GroupBox Header="显示设置" Margin="0,0,0,10">
+                <StackPanel>
+                    <CheckBox Content="显示比例尺" IsChecked="{Binding ViewModel.IsScaleBarVisible}" Margin="5"/>
+
+                    <Grid Margin="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="位置:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding PositionOptions}" 
+                                 SelectedItem="{Binding ViewModel.Position}" Margin="5,0"/>
+
+                        <TextBlock Text="绘制模式:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding DrawModeOptions}" 
+                                 SelectedItem="{Binding ViewModel.DrawMode}" Margin="5,0"/>
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- 比例尺模式切换 -->
+            <GroupBox Header="比例尺模式" Margin="0,0,0,10">
+                <StackPanel>
+                    <RadioButton Content="使用真实比例尺" IsChecked="{Binding ViewModel.IsSetScaleMode}" 
+                                GroupName="ScaleMode" Margin="5"/>
+                    <RadioButton Content="使用像素长度" IsChecked="{Binding ViewModel.IsSetScaleMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}" 
+                                GroupName="ScaleMode" Margin="5"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- 真实比例尺设置 -->
+            <GroupBox Header="真实比例尺设置" Margin="0,0,0,10" 
+                     Visibility="{Binding ViewModel.IsSetScaleMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="水平数值:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ViewModel.WidthinUnit}" Margin="5"/>
+
+                    <TextBlock Text="垂直数值:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ViewModel.HeightinUnit}" Margin="5"/>
+
+                    <TextBlock Text="比例尺:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ViewModel.Scale}" Margin="5"/>
+
+                    <TextBlock Text="像素宽高比:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ViewModel.PixelAspectRatio}" Margin="5"/>
+
+                    <TextBlock Text="单位:" Grid.Row="4" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <ComboBox Grid.Row="4" Grid.Column="1" ItemsSource="{Binding UnitOptions}" 
+                             SelectedItem="{Binding ViewModel.Unit}" IsEditable="True" Margin="5"/>
+                </Grid>
+            </GroupBox>
+
+            <!-- 像素长度设置 -->
+            <GroupBox Header="像素长度设置" Margin="0,0,0,10" 
+                     Visibility="{Binding ViewModel.IsSetScaleMode, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="水平长度:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding ViewModel.ScaleLengthWidth}" Margin="5"/>
+
+                    <TextBlock Text="垂直长度:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="5"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ViewModel.ScaleLengthHeight}" Margin="5"/>
+                </Grid>
+            </GroupBox>
+
+            <!-- 外观设置 -->
+            <GroupBox Header="外观设置" Margin="0,0,0,10">
+                <StackPanel>
+                    <!-- 字体设置 -->
+                    <Grid Margin="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="字体大小:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                            <Slider Minimum="8" Maximum="32" Value="{Binding ViewModel.FontSize}" 
+                                   Width="120" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding ViewModel.FontSize}" Width="40" Margin="10,0,0,0"/>
+                        </StackPanel>
+
+                        <TextBlock Text="线宽:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                            <Slider Minimum="1" Maximum="10" Value="{Binding ViewModel.LineWidth}" 
+                                   Width="120" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding ViewModel.LineWidth}" Width="40" Margin="10,0,0,0"/>
+                        </StackPanel>
+
+                        <TextBlock Text="字体系列:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding FontFamilyOptions}" 
+                                 SelectedItem="{Binding ViewModel.FontFamily}" IsEditable="True"/>
+
+                        <TextBlock Text="字体可见性:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding FontVisibilityOptions}" 
+                                 SelectedItem="{Binding ViewModel.FontVisibility, Converter={StaticResource StringToVisibilityConverter}}"/>
+                    </Grid>
+
+                    <!-- 颜色设置 -->
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Button Content="选择文字颜色" Click="SelectTextColorButton_Click" 
+                               Width="100" Height="30" Margin="0,0,10,0"/>
+                        <Rectangle Width="30" Height="30" Fill="{Binding ViewModel.TextBrush}" 
+                                  Stroke="Black" StrokeThickness="1"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Button Content="选择背景颜色" Click="SelectBackgroundColorButton_Click" 
+                               Width="100" Height="30" Margin="0,0,10,0"/>
+                        <Rectangle Width="30" Height="30" Fill="{Binding ViewModel.BackgroundBrush}" 
+                                  Stroke="Black" StrokeThickness="1"/>
+                    </StackPanel>
+
+                    <!-- 字体粗细 -->
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <TextBlock Text="字体粗细:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <CheckBox Content="粗体" IsChecked="{Binding ViewModel.FontWeight, Converter={StaticResource FontWeightConverter}}"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+        </StackPanel>
+    </ScrollViewer>
+    
+</UserControl>
