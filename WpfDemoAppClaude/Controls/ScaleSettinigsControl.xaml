@@ -1,0 +1,213 @@
+﻿<UserControl
+    x:Class="WpfDemoAppClaude.Controls.ScaleSettinigsControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="clr-namespace:WpfDemoAppClaude.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WpfDemoAppClaude.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="10">
+            <!--  比例尺显示设置  -->
+            <GroupBox Margin="0,0,0,10" Header="比例尺显示">
+                <StackPanel Margin="5">
+                    <CheckBox Content="显示比例尺" IsChecked="{Binding IsScaleBarVisible}" />
+
+                    <Label Margin="0,5,0,0" Content="位置:" />
+                    <ComboBox SelectedItem="{Binding Position}">
+                        <ComboBoxItem Content="左上" />
+                        <ComboBoxItem Content="右上" />
+                        <ComboBoxItem Content="左下" />
+                        <ComboBoxItem Content="右下" />
+                    </ComboBox>
+
+                    <Label Margin="0,5,0,0" Content="绘制模式:" />
+                    <ComboBox SelectedItem="{Binding DrawMode}">
+                        <ComboBoxItem Content="水平" />
+                        <ComboBoxItem Content="竖直" />
+                        <ComboBoxItem Content="共存" />
+                    </ComboBox>
+                </StackPanel>
+            </GroupBox>
+
+            <!--  比例尺模式设置  -->
+            <GroupBox Margin="0,0,0,10" Header="比例尺模式">
+                <StackPanel Margin="5">
+                    <CheckBox Content="已设置比例尺模式" IsChecked="{Binding IsSetScaleMode}" />
+
+                    <StackPanel Visibility="Visible">
+                        <Label Margin="0,5,0,0" Content="横向数值:" />
+                        <TextBox Text="{Binding WidthinUnit, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <Label Margin="0,5,0,0" Content="纵向数值:" />
+                        <TextBox Text="{Binding HeightinUnit, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <Label Margin="0,5,0,0" Content="比例尺 (像素/单位):" />
+                        <TextBox Text="{Binding Scale, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <Label Margin="0,5,0,0" Content="像素宽高比:" />
+                        <TextBox Text="{Binding PixelAspectRatio, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <Label Margin="0,5,0,0" Content="单位:" />
+                        <TextBox Text="{Binding Unit}" />
+                    </StackPanel>
+
+                    <StackPanel Visibility="Visible">
+
+                        <Label Margin="0,5,0,0" Content="横向长度 (像素):" />
+                        <Slider
+                            IsSnapToTickEnabled="True"
+                            Maximum="200"
+                            Minimum="10"
+                            TickFrequency="10"
+                            Value="{Binding ScaleLengthWidth}" />
+                        <TextBlock HorizontalAlignment="Center" Text="{Binding ScaleLengthWidth}" />
+
+                        <Label Margin="0,5,0,0" Content="纵向长度 (像素):" />
+                        <Slider
+                            IsSnapToTickEnabled="True"
+                            Maximum="200"
+                            Minimum="10"
+                            TickFrequency="10"
+                            Value="{Binding ScaleLengthHeight}" />
+                        <TextBlock HorizontalAlignment="Center" Text="{Binding ScaleLengthHeight}" />
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <!--  字体设置  -->
+            <GroupBox Margin="0,0,0,10" Header="字体设置">
+                <StackPanel Margin="5">
+                    <CheckBox Content="显示字体" IsChecked="{Binding IsFontVisible}" />
+
+                    <Label Margin="0,5,0,0" Content="字体大小:" />
+                    <Slider
+                        IsSnapToTickEnabled="True"
+                        Maximum="36"
+                        Minimum="8"
+                        TickFrequency="2"
+                        Value="{Binding FontSize}" />
+                    <TextBlock HorizontalAlignment="Center" Text="{Binding FontSize}" />
+
+                    <Label Margin="0,5,0,0" Content="字体族:" />
+                    <ComboBox SelectedItem="{Binding FontFamily}">
+                        <ComboBoxItem Content="Arial" />
+                        <ComboBoxItem Content="Helvetica" />
+                        <ComboBoxItem Content="Times New Roman" />
+                        <ComboBoxItem Content="Calibri" />
+                        <ComboBoxItem Content="Verdana" />
+                        <ComboBoxItem Content="Microsoft YaHei" />
+                        <ComboBoxItem Content="SimSun" />
+                    </ComboBox>
+
+                    <Label Margin="0,5,0,0" Content="字体粗细:" />
+                    <ComboBox SelectedItem="{Binding FontWeight}">
+                        <ComboBoxItem Content="{x:Static FontWeights.Light}" />
+                        <ComboBoxItem Content="{x:Static FontWeights.Normal}" />
+                        <ComboBoxItem Content="{x:Static FontWeights.Medium}" />
+                        <ComboBoxItem Content="{x:Static FontWeights.SemiBold}" />
+                        <ComboBoxItem Content="{x:Static FontWeights.Bold}" />
+                        <ComboBoxItem Content="{x:Static FontWeights.ExtraBold}" />
+                    </ComboBox>
+
+                    <Label Margin="0,5,0,0" Content="字体颜色:" />
+                    <ComboBox SelectedItem="{Binding SelectedTextColor}">
+                        <ComboBoxItem Content="白色" Tag="White" />
+                        <ComboBoxItem Content="黑色" Tag="Black" />
+                        <ComboBoxItem Content="红色" Tag="Red" />
+                        <ComboBoxItem Content="绿色" Tag="Green" />
+                        <ComboBoxItem Content="蓝色" Tag="Blue" />
+                        <ComboBoxItem Content="黄色" Tag="Yellow" />
+                        <ComboBoxItem Content="橙色" Tag="Orange" />
+                    </ComboBox>
+                </StackPanel>
+            </GroupBox>
+
+            <!--  线条设置  -->
+            <GroupBox Margin="0,0,0,10" Header="线条设置">
+                <StackPanel Margin="5">
+                    <Label Margin="0,5,0,0" Content="线条宽度:" />
+                    <Slider
+                        IsSnapToTickEnabled="True"
+                        Maximum="10"
+                        Minimum="1"
+                        TickFrequency="1"
+                        Value="{Binding LineWidth}" />
+                    <TextBlock HorizontalAlignment="Center" Text="{Binding LineWidth}" />
+                </StackPanel>
+            </GroupBox>
+
+            <!--  背景设置  -->
+            <GroupBox Margin="0,0,0,10" Header="背景设置">
+                <StackPanel Margin="5">
+                    <Label Margin="0,5,0,0" Content="背景颜色:" />
+                    <ComboBox SelectedItem="{Binding SelectedBackgroundColor}">
+                        <ComboBoxItem Content="灰色" Tag="Gray" />
+                        <ComboBoxItem Content="黑色" Tag="Black" />
+                        <ComboBoxItem Content="白色" Tag="White" />
+                        <ComboBoxItem Content="透明" Tag="Transparent" />
+                        <ComboBoxItem Content="深灰" Tag="DarkGray" />
+                        <ComboBoxItem Content="浅灰" Tag="LightGray" />
+                    </ComboBox>
+                </StackPanel>
+            </GroupBox>
+
+            <!--  缩放控制设置  -->
+            <GroupBox Margin="0,0,0,10" Header="缩放控制">
+                <StackPanel Margin="5">
+                    <Label Margin="0,5,0,0" Content="最小缩放比例:" />
+                    <Slider
+                        IsSnapToTickEnabled="True"
+                        Maximum="2.0"
+                        Minimum="0.1"
+                        TickFrequency="0.1"
+                        Value="{Binding MinScale}" />
+                    <TextBlock HorizontalAlignment="Center" Text="{Binding MinScale}" />
+
+                    <Label Margin="0,5,0,0" Content="最大缩放比例:" />
+                    <Slider
+                        IsSnapToTickEnabled="True"
+                        Maximum="20.0"
+                        Minimum="2.0"
+                        TickFrequency="1"
+                        Value="{Binding MaxScale}" />
+                    <TextBlock HorizontalAlignment="Center" Text="{Binding MaxScale}" />
+
+                    <Label Margin="0,5,0,0" Content="拖拽灵敏度:" />
+                    <Slider
+                        IsSnapToTickEnabled="True"
+                        Maximum="3.0"
+                        Minimum="0.5"
+                        TickFrequency="0.1"
+                        Value="{Binding PanSensitivity}" />
+                    <TextBlock HorizontalAlignment="Center" Text="{Binding PanSensitivity}" />
+                </StackPanel>
+            </GroupBox>
+
+            <!--  操作按钮  -->
+            <StackPanel
+                Margin="0,10,0,0"
+                HorizontalAlignment="Center"
+                Orientation="Horizontal">
+                <Button
+                    Margin="5,0"
+                    Command="{Binding ResetToDefaultCommand}"
+                    Content="重置为默认" />
+                <Button
+                    Margin="5,0"
+                    Command="{Binding ApplySettingsCommand}"
+                    Content="应用设置" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+
+
+</UserControl>

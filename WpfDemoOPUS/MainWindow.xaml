@@ -1,0 +1,205 @@
+﻿<Window
+    x:Class="WpfDemoOPUS.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:WpfDemoOPUS.Controls"
+    xmlns:converters="clr-namespace:WpfDemoOPUS.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:WpfDemoOPUS"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:WpfDemoOPUS.ViewModels"
+    Title="MainWindow"
+    Width="800"
+    Height="450"
+    mc:Ignorable="d">
+
+    <Window.DataContext>
+        <vm:MainWindowViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <converters:TextColorToBrushConverter x:Key="TextColorToBrushConverter" />
+        <converters:BackgroundColorToBrushConverter x:Key="BackgroundColorToBrushConverter" />
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="350" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!--  左侧设置面板  -->
+        <Border
+            Grid.Column="0"
+            BorderBrush="Gray"
+            BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="40" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock
+                    Grid.Row="0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="16"
+                    FontWeight="Bold"
+                    Text="比例尺设置" />
+
+                <controls:ScaleBarSettingsControl Grid.Row="1" DataContext="{Binding Settings}" />
+            </Grid>
+        </Border>
+
+        <!--  右侧显示区域  -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!--  主显示区域  -->
+            <Border
+                Grid.Row="0"
+                BorderBrush="Gray"
+                BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!--  标题栏和操作按钮  -->
+                    <Grid Grid.Row="0" Background="#F0F0F0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock
+                            Grid.Column="0"
+                            Margin="10,0"
+                            VerticalAlignment="Center"
+                            FontSize="14"
+                            FontWeight="Bold"
+                            Text="{Binding DisplayFirst.DisplayName}" />
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Margin="5"
+                            Orientation="Horizontal">
+                            <Button
+                                Margin="2"
+                                Padding="10,5"
+                                Command="{Binding LoadImageToFirstCommand}"
+                                Content="加载图像" />
+                            <Button
+                                Margin="2"
+                                Padding="10,5"
+                                Command="{Binding GenerateRandomImageFirstCommand}"
+                                Content="生成随机" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!--  图像显示控件 - 主显示  -->
+                    <controls:ImageDisplayControl
+                        Grid.Row="1"
+                        Background="Black"
+                        DrawMode="{Binding Settings.DrawMode}"
+                        FontVisibility="{Binding Settings.ShowFont, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        HeightinUnit="{Binding Settings.HeightinUnit}"
+                        IsScaleBarVisible="{Binding Settings.IsScaleBarVisible}"
+                        IsSetScaleMode="{Binding Settings.IsSetScaleMode}"
+                        LineWidth="{Binding Settings.LineWidth}"
+                        MaxScale="{Binding Settings.MaxScale}"
+                        MinScale="{Binding Settings.MinScale}"
+                        PanSensitivity="{Binding Settings.PanSensitivity}"
+                        PixelAspectRatio="{Binding Settings.PixelAspectRatio}"
+                        Position="{Binding Settings.Position}"
+                        Scale="{Binding Settings.Scale}"
+                        ScaleBackgroundBrush="{Binding Settings.BackgroundColor, Converter={StaticResource BackgroundColorToBrushConverter}}"
+                        ScaleFontFamily="{Binding Settings.FontFamily}"
+                        ScaleFontSize="{Binding Settings.FontSize}"
+                        ScaleLengthHeight="{Binding Settings.ScaleLengthHeight}"
+                        ScaleLengthWidth="{Binding Settings.ScaleLengthWidth}"
+                        Source="{Binding DisplayFirst.Frame}"
+                        TextBrush="{Binding Settings.TextColor, Converter={StaticResource TextColorToBrushConverter}}"
+                        Unit="{Binding Settings.Unit}"
+                        WidthinUnit="{Binding Settings.WidthinUnit}" />
+                </Grid>
+            </Border>
+
+            <!--  副显示区域  -->
+            <Border Grid.Row="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="40" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!--  标题栏和操作按钮  -->
+                    <Grid Grid.Row="0" Background="#F0F0F0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock
+                            Grid.Column="0"
+                            Margin="10,0"
+                            VerticalAlignment="Center"
+                            FontSize="14"
+                            FontWeight="Bold"
+                            Text="{Binding DisplaySecond.DisplayName}" />
+
+                        <StackPanel
+                            Grid.Column="2"
+                            Margin="5"
+                            Orientation="Horizontal">
+                            <Button
+                                Margin="2"
+                                Padding="10,5"
+                                Command="{Binding LoadImageToSecondCommand}"
+                                Content="加载图像" />
+                            <Button
+                                Margin="2"
+                                Padding="10,5"
+                                Command="{Binding GenerateRandomImageSecondCommand}"
+                                Content="生成随机" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!--  图像显示控件 - 副显示  -->
+                    <controls:ImageDisplayControl
+                        Grid.Row="1"
+                        Background="DarkGray"
+                        DrawMode="{Binding Settings.DrawMode}"
+                        FontVisibility="{Binding Settings.ShowFont, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        HeightinUnit="{Binding Settings.HeightinUnit}"
+                        IsScaleBarVisible="{Binding Settings.IsScaleBarVisible}"
+                        IsSetScaleMode="{Binding Settings.IsSetScaleMode}"
+                        LineWidth="{Binding Settings.LineWidth}"
+                        MaxScale="{Binding Settings.MaxScale}"
+                        MinScale="{Binding Settings.MinScale}"
+                        PanSensitivity="{Binding Settings.PanSensitivity}"
+                        PixelAspectRatio="{Binding Settings.PixelAspectRatio}"
+                        Position="{Binding Settings.Position}"
+                        Scale="{Binding Settings.Scale}"
+                        ScaleBackgroundBrush="{Binding Settings.BackgroundColor, Converter={StaticResource BackgroundColorToBrushConverter}}"
+                        ScaleFontFamily="{Binding Settings.FontFamily}"
+                        ScaleFontSize="{Binding Settings.FontSize}"
+                        ScaleLengthHeight="{Binding Settings.ScaleLengthHeight}"
+                        ScaleLengthWidth="{Binding Settings.ScaleLengthWidth}"
+                        Source="{Binding DisplaySecond.Frame}"
+                        TextBrush="{Binding Settings.TextColor, Converter={StaticResource TextColorToBrushConverter}}"
+                        Unit="{Binding Settings.Unit}"
+                        WidthinUnit="{Binding Settings.WidthinUnit}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+
+</Window>

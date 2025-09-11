@@ -1,0 +1,39 @@
+﻿<UserControl
+    x:Class="WpfDemoOPUS.Controls.ImageDisplayControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:lib="clr-namespace:WpfCustomControlLibrary1;assembly=WpfCustomControlLibrary1"
+    xmlns:local="clr-namespace:WpfDemoOPUS.Controls"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Grid>
+        <lib:ScaleBarEx
+            x:Name="ScaleBar"
+            Background="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=Background}"
+            BackgroundBrush="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ScaleBackgroundBrush}"
+            DrawMode="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=DrawMode}"
+            FontFamily="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ScaleFontFamily}"
+            FontSize="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ScaleFontSize}"
+            FontVisibility="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=FontVisibility}"
+            FontWeight="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ScaleFontWeight}"
+            HeightinUnit="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=HeightinUnit}"
+            ImageSource="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=Source}"
+            IsScaleBarVisible="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=IsScaleBarVisible}"
+            IsSetScaleMode="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=IsSetScaleMode}"
+            LineWidth="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=LineWidth}"
+            MaxScale="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=MaxScale}"
+            MinScale="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=MinScale}"
+            PanSensitivity="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=PanSensitivity}"
+            PixelAspectRatio="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=PixelAspectRatio}"
+            Position="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=Position}"
+            Scale="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=Scale}"
+            ScaleLengthHeight="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ScaleLengthHeight}"
+            ScaleLengthWidth="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=ScaleLengthWidth}"
+            TextBrush="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=TextBrush}"
+            Unit="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=Unit}"
+            WidthinUnit="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Path=WidthinUnit}" />
+    </Grid>
+</UserControl>

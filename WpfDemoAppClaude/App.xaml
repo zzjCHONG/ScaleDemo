@@ -1,8 +1,8 @@
 ﻿<Application
-    x:Class="WpfDemoApp.App"
+    x:Class="WpfDemoAppClaude.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:WpfDemoApp"
-    StartupUri="DemoWindow.xaml">
+    xmlns:local="clr-namespace:WpfDemoAppClaude"
+    StartupUri="MainWindow.xaml">
     <Application.Resources />
 </Application>

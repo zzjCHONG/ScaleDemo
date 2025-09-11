@@ -38,7 +38,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*" />
             <!--<ColumnDefinition Width="Auto" />-->
-            <ColumnDefinition Width="0" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!--  左侧：ScaleBarEx 控件  -->
@@ -80,10 +80,10 @@
             Background="LightGray" />-->
 
         <ScrollViewer
-            Visibility="Collapsed"
             Grid.Column="1"
             Margin="5"
-            VerticalScrollBarVisibility="Auto">
+            VerticalScrollBarVisibility="Auto"
+            Visibility="Visible">
             <StackPanel Margin="10">
                 <TextBlock Style="{StaticResource HeaderTextStyle}" Text="图片设置" />
                 <Button

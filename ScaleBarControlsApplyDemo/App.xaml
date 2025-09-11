@@ -4,51 +4,51 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:ScaleBarControlsApplyDemo"
     StartupUri="MainWindow.xaml">
-    
+
     <Application.Resources>
-        <!-- 全局样式 -->
+        <!--  全局样式  -->
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- 可以在这里引入其他资源字典 -->
+                <!--  可以在这里引入其他资源字典  -->
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- 全局样式定义 -->
+            <!--  全局样式定义  -->
             <Style TargetType="GroupBox">
-                <Setter Property="FontWeight" Value="SemiBold"/>
-                <Setter Property="Foreground" Value="DarkBlue"/>
-                <Setter Property="BorderBrush" Value="LightGray"/>
-                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="DarkBlue" />
+                <Setter Property="BorderBrush" Value="LightGray" />
+                <Setter Property="BorderThickness" Value="1" />
             </Style>
 
             <Style TargetType="Button">
-                <Setter Property="Background" Value="LightBlue"/>
-                <Setter Property="BorderBrush" Value="DarkBlue"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Padding" Value="8,4"/>
-                <Setter Property="Margin" Value="2"/>
+                <Setter Property="Background" Value="LightBlue" />
+                <Setter Property="BorderBrush" Value="DarkBlue" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="8,4" />
+                <Setter Property="Margin" Value="2" />
                 <Style.Triggers>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="SkyBlue"/>
+                        <Setter Property="Background" Value="SkyBlue" />
                     </Trigger>
                     <Trigger Property="IsPressed" Value="True">
-                        <Setter Property="Background" Value="DeepSkyBlue"/>
+                        <Setter Property="Background" Value="DeepSkyBlue" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
             <Style TargetType="TextBox">
-                <Setter Property="Padding" Value="4,2"/>
-                <Setter Property="BorderBrush" Value="Gray"/>
-                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="4,2" />
+                <Setter Property="BorderBrush" Value="Gray" />
+                <Setter Property="BorderThickness" Value="1" />
                 <Style.Triggers>
                     <Trigger Property="IsFocused" Value="True">
-                        <Setter Property="BorderBrush" Value="Blue"/>
-                        <Setter Property="BorderThickness" Value="2"/>
+                        <Setter Property="BorderBrush" Value="Blue" />
+                        <Setter Property="BorderThickness" Value="2" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
 
         </ResourceDictionary>
     </Application.Resources>
-    
+
 </Application>
