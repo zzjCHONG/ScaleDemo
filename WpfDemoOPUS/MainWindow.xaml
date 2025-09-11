@@ -104,7 +104,8 @@
                     </Grid>
 
                     <!--  图像显示控件 - 主显示  -->
-                    <controls:ImageDisplayControl
+
+                    <!--<controls:ImageDisplayControl
                         Grid.Row="1"
                         Background="Black"
                         DrawMode="{Binding Settings.DrawMode}"
@@ -127,8 +128,15 @@
                         Source="{Binding DisplayFirst.Frame}"
                         TextBrush="{Binding Settings.TextColor, Converter={StaticResource TextColorToBrushConverter}}"
                         Unit="{Binding Settings.Unit}"
-                        WidthinUnit="{Binding Settings.WidthinUnit}" />
+                        WidthinUnit="{Binding Settings.WidthinUnit}" />-->
+
+                    <controls:ImageDisplayControl
+                        Grid.Row="1"
+                        Background="Black"
+                        Source="{Binding DisplayFirst.Frame}" />
                 </Grid>
+
+
             </Border>
 
             <!--  副显示区域  -->
@@ -173,7 +181,8 @@
                     </Grid>
 
                     <!--  图像显示控件 - 副显示  -->
-                    <controls:ImageDisplayControl
+
+                    <!--<controls:ImageDisplayControl
                         Grid.Row="1"
                         Background="DarkGray"
                         DrawMode="{Binding Settings.DrawMode}"
@@ -196,7 +205,13 @@
                         Source="{Binding DisplaySecond.Frame}"
                         TextBrush="{Binding Settings.TextColor, Converter={StaticResource TextColorToBrushConverter}}"
                         Unit="{Binding Settings.Unit}"
-                        WidthinUnit="{Binding Settings.WidthinUnit}" />
+                        WidthinUnit="{Binding Settings.WidthinUnit}" />-->
+
+                    <controls:ImageDisplayControl
+                        Grid.Row="1"
+                        Background="DarkGray"
+                        Source="{Binding DisplaySecond.Frame}" />
+
                 </Grid>
             </Border>
         </Grid>
